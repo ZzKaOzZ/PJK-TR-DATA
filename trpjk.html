@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4f46e5">
+    <title>PEA Data Collection - เก็บข้อมูลหม้อแปลง</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        :root {
+            --pending: #64748b;
+            --partial: #eab308;
+            --done: #dc2626;
+            --brand: #4f46e5;
+            --brand-2: #7c3aed;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, "Noto Sans Thai", sans-serif;
+            background: #1e1b4b;
+            min-height: 100vh;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 10px;
+            height: 100vh;
+            height: 100dvh;
+        }
+        .map-container {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+        #map { width: 100%; height: 100%; }
+        .map-legend {
+            position: absolute;
+            left: 12px;
+            bottom: 12px;
+            z-index: 500;
+            background: rgba(255,255,255,.95);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .map-controls {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .locate-btn, .follow-btn {
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            min-height: 40px;
+        }
+        .locate-btn.active { background: #2563eb; color: #fff; }
+        .follow-btn.active { background: #0f766e; color: #fff; }
+        .nav-hud {
+            display: none;
+            position: absolute;
+            left: 12px;
+            right: 72px;
+            top: 12px;
+            z-index: 510;
+            background: rgba(15, 23, 42, .92);
+            color: #fff;
+            border-radius: 12px;
+            padding: 10px 56px 10px 12px;
+            pointer-events: auto;
+        }
+        .nav-hud.active { display: block; }
+        .nav-hud .nav-title { font-size: 13px; font-weight: 700; }
+        .nav-hud .nav-dist { font-size: 22px; font-weight: 800; margin: 2px 0; }
+        .nav-hud .nav-dir { font-size: 13px; opacity: .9; }
+        .nav-hud .nav-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .nav-hud button {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .nav-stop { background: #fecaca; color: #991b1b; }
+        .nav-open { background: #c7d2fe; color: #312e81; }
+        .compass {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #fff;
+            color: #111827;
+        }
+        .compass-needle {
+            position: absolute;
+            left: 50%;
+            top: 6px;
+            width: 0;
+            height: 0;
+            margin-left: -7px;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 18px solid #dc2626;
+            transform-origin: 50% 17px;
+        }
+        .me-wrap { position: relative; width: 36px; height: 36px; }
+        .me-pulse {
+            position: absolute; inset: 4px;
+            border-radius: 50%;
+            background: rgba(37, 99, 235, .28);
+            animation: mepulse 1.6s ease-out infinite;
+        }
+        .me-core {
+            position: absolute; left: 11px; top: 11px;
+            width: 14px; height: 14px;
+            background: #2563eb;
+            border: 3px solid #fff;
+            border-radius: 50%;
+        }
+        .me-head {
+            position: absolute; left: 14px; top: 0;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 10px solid #1d4ed8;
+            transform-origin: 4px 18px;
+        }
+        @keyframes mepulse {
+            0% { transform: scale(.7); opacity: .8; }
+            100% { transform: scale(1.7); opacity: 0; }
+        }
+        .dist-label { color: #2563eb; font-weight: 700; font-size: 11px; margin-top: 3px; }
+        .item-row { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+        .mini-nav {
+            background: #2563eb; color: #fff; border: none; border-radius: 6px;
+            padding: 8px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+        }
+        .nav-in-modal { background: #0f766e; color: #fff; width: 100%; padding: 10px; margin-top: 8px; }
+        .sidebar {
+            background: #fff;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+            color: #fff;
+            padding: 16px;
+            font-weight: 700;
+        }
+        .sidebar-header small { display: block; font-weight: 500; opacity: .85; margin-top: 4px; }
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 14px; }
+        .share-box {
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .share-box h3 { color: #1d4ed8; font-size: 13px; margin-bottom: 6px; }
+        .perm-box {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .perm-box h3 { color: #854d0e; font-size: 13px; margin-bottom: 8px; }
+        .perm-box.done { background: #ecfdf5; border-color: #86efac; }
+        .perm-box.done h3 { color: #166534; }
+        .key-box {
+            font-family: Consolas, monospace;
+            font-size: 10px;
+            word-break: break-all;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 8px 0;
+            max-height: 72px;
+            overflow: auto;
+        }
+        .perm-actions { display: flex; flex-direction: column; gap: 6px; }
+        .perm-btn {
+            background: #ca8a04;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .perm-btn.secondary { background: #fff; color: #854d0e; border: 1px solid #fde047; }
+        .share-link-input, .search-input, select, textarea, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .share-link-input { font-size: 12px; word-break: break-all; background: #fff; }
+        .copy-link-btn, .btn-primary, .btn-secondary, .add-feeder-btn, .image-upload-btn, .line-btn, .camera-btn {
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .copy-link-btn {
+            background: #2563eb;
+            color: #fff;
+            width: 100%;
+            padding: 12px 8px;
+        }
+        .line-btn {
+            background: #06c755;
+            color: #fff;
+            width: 100%;
+            padding: 12px 8px;
+        }
+        .line-banner {
+            display: none;
+            background: #ecfdf3;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .img-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .camera-btn { background: #0f766e; color: #fff; padding: 12px 14px; }
+        .ok-msg { display: none; margin-top: 8px; color: #065f46; background: #d1fae5; padding: 6px 8px; border-radius: 6px; font-size: 12px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .stat-box { background: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-box .number { font-size: 20px; font-weight: 800; }
+        .stat-box .label { font-size: 12px; color: #64748b; }
+        .filters { display: flex; gap: 6px; margin: 8px 0 10px; flex-wrap: wrap; }
+        .chip {
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .chip.active { background: #111827; color: #fff; border-color: #111827; }
+        .location-item {
+            background: #f8fafc;
+            border-left: 4px solid var(--pending);
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .location-item.completed { border-left-color: var(--done); background: #fef2f2; }
+        .location-item.partial { border-left-color: var(--partial); background: #fefce8; }
+        .location-item .loc-main { font-weight: 700; margin-bottom: 2px; }
+        .location-item .loc-sub { color: #6b7280; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 4px; }
+        .badge.completed { background: #fee2e2; color: #991b1b; }
+        .badge.partial { background: #fef3c7; color: #92400e; }
+        .badge.pending { background: #e5e7eb; color: #374151; }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,.55);
+            z-index: 2000;
+            padding: 16px;
+            overflow: auto;
+        }
+        .modal.active { display: flex; align-items: flex-start; justify-content: center; }
+        .modal-content {
+            background: #fff;
+            border-radius: 14px;
+            width: min(640px, 100%);
+            margin: 24px auto;
+            overflow: hidden;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            color: #fff;
+            padding: 16px 44px 16px 18px;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute; top: 12px; right: 12px;
+            width: 32px; height: 32px; border: none; border-radius: 6px;
+            background: rgba(255,255,255,.2); color: #fff; font-size: 22px; cursor: pointer;
+        }
+        .modal-body { padding: 18px; }
+        .modal-footer {
+            padding: 12px 18px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .location-info {
+            background: #f0f9ff;
+            border-left: 4px solid #0284c7;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label, .block-label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; }
+        .image-upload { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .image-upload-btn { background: #4f46e5; color: #fff; padding: 10px 14px; }
+        .image-preview { position: relative; }
+        .image-preview img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .image-preview .remove-btn {
+            position: absolute; top: -7px; right: -7px;
+            width: 22px; height: 22px; border: none; border-radius: 50%;
+            background: #ef4444; color: #fff; cursor: pointer;
+        }
+        .feeders-container { background: #f8fafc; padding: 12px; border-radius: 8px; }
+        .feeder-block {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .feeder-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .phase-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .phase-inputs label { font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px; }
+        .add-feeder-btn { background: #16a34a; color: #fff; padding: 10px 14px; margin-top: 4px; }
+        .remove-feeder-btn { background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; }
+        .btn-primary { background: #4f46e5; color: #fff; padding: 10px 18px; }
+        .btn-secondary { background: #e5e7eb; color: #111827; padding: 10px 18px; }
+        .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .toast {
+            position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+            background: #111827; color: #fff; padding: 10px 16px; border-radius: 8px;
+            z-index: 3000; display: none; font-size: 13px;
+        }
+        @media (max-width: 860px) {
+            body { background: #eef2ff; }
+            .container { grid-template-columns: 1fr; height: auto; min-height: 100dvh; padding: 8px; gap: 8px; }
+            .map-container { height: 46vh; border-radius: 12px; }
+            .sidebar { min-height: 52vh; border-radius: 12px; }
+            .phase-inputs { grid-template-columns: 1fr; }
+            .modal { padding: 0; }
+            .modal-content { width: 100%; margin: 0; min-height: 100dvh; border-radius: 0; }
+            .modal-footer { position: sticky; bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+            .btn-primary, .btn-secondary, .add-feeder-btn, .image-upload-btn, .camera-btn { min-height: 44px; }
+            .map-controls { top: auto; bottom: 88px; }
+            .nav-hud { right: 12px; left: 12px; top: 8px; }
+            .map-legend { left: 12px; bottom: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="line-banner" id="lineBanner">
+        เปิดจากไลน์อยู่ หากถ่ายรูปหรือบันทึกไม่ได้ ให้กดเมนู <b>⋮</b> มุมขวาบน แล้วเลือก <b>เปิดในเบราว์เซอร์</b>
+    </div>
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="nav-hud" id="navHud">
+                <div class="compass"><div class="compass-needle" id="compassNeedle"></div></div>
+                <div class="nav-title" id="navTitle">นำทาง</div>
+                <div class="nav-dist" id="navDist">--</div>
+                <div class="nav-dir" id="navDir">รอสัญญาณ GPS</div>
+                <div class="nav-actions">
+                    <button class="nav-open" onclick="openTargetForm()">กรอกข้อมูล</button>
+                    <button class="nav-stop" onclick="stopNav()">หยุดนำทาง</button>
+                </div>
+            </div>
+            <div class="map-controls">
+                <button class="locate-btn" id="trackBtn" onclick="toggleTracking()">ติดตามตำแหน่ง</button>
+                <button class="follow-btn" id="followBtn" onclick="toggleFollow()">ตามกล้อง</button>
+            </div>
+            <div class="map-legend">
+                <div><span class="dot" style="background:#64748b"></span>ยังไม่ดำเนินการ</div>
+                <div><span class="dot" style="background:#eab308"></span>ลงข้อมูลไม่ครบ</div>
+                <div><span class="dot" style="background:#dc2626"></span>ดำเนินการแล้ว</div>
+            </div>
+        </div>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                ระบบเก็บข้อมูลหม้อแปลง
+                <small>ปักหมุดจากไฟล์ Rak-D.xlsx · กดหมุดเพื่อเพิ่มข้อมูล</small>
+            </div>
+            <div class="sidebar-content">
+                <div class="share-box">
+                    <h3>ลิงก์ส่งไลน์ / ใช้บนมือถือ</h3>
+                    <input id="shareLink" class="share-link-input" readonly placeholder="กำลังสร้างลิงก์...">
+                    <div class="share-actions">
+                        <button class="copy-link-btn" onclick="copyLink()">คัดลอกลิงก์</button>
+                        <button class="line-btn" onclick="shareLine()">ส่งทางไลน์</button>
+                    </div>
+                    <div class="ok-msg" id="successMsg">คัดลอกลิงก์แล้ว ส่งในไลน์ได้เลย</div>
+                    <p class="hint" id="shareHint">รอสร้างลิงก์ HTTPS สักครู่ จากนั้นส่งให้ทีมได้ทันที แม้ใช้เน็ตมือถือ</p>
+                </div>
+                <div class="perm-box" id="permBox">
+                    <h3 id="permTitle">สำคัญเรื่องลิงก์ไลน์</h3>
+                    <p id="permText">ลิงก์ในไลน์ใช้ได้เฉพาะอันล่าสุดในช่องด้านบน ลิงก์เก่าจะขึ้น no tunnel here ทุกครั้งที่ปิด start.bat หรือเน็ตหลุด</p>
+                    <div class="key-box" id="tunnelKeyBox" style="display:none"></div>
+                    <div class="perm-actions" style="display:none"></div>
+                </div>
+                <div class="stats">
+                    <div class="stat-box"><div class="number" id="totalCount">0</div><div class="label">ทั้งหมด</div></div>
+                    <div class="stat-box"><div class="number" id="completedCount" style="color:#dc2626">0</div><div class="label">ดำเนินการแล้ว</div></div>
+                    <div class="stat-box"><div class="number" id="partialCount" style="color:#ca8a04">0</div><div class="label">ไม่ครบ</div></div>
+                    <div class="stat-box"><div class="number" id="pendingCount" style="color:#64748b">0</div><div class="label">รอดำเนินการ</div></div>
+                </div>
+                <input class="search-input" id="searchBox" placeholder="ค้นหา หม้อแปลง / ผู้รับผิดชอบ" oninput="renderList()">
+                <div class="filters">
+                    <button class="chip active" data-filter="all" onclick="setFilter('all')">ทั้งหมด</button>
+                    <button class="chip" data-filter="pending" onclick="setFilter('pending')">รอ</button>
+                    <button class="chip" data-filter="partial" onclick="setFilter('partial')">ไม่ครบ</button>
+                    <button class="chip" data-filter="completed" onclick="setFilter('completed')">เสร็จ</button>
+                    <button class="chip" id="nearChip" onclick="toggleNearest()">ใกล้สุด</button>
+                </div>
+                <div id="locationList"></div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="modal" id="dataModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" style="font-size:18px">เพิ่มข้อมูล</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="location-info" id="locationInfo"></div>
+                <div class="form-group">
+                    <label>รูปภาพ (เพิ่มได้มากกว่า 1 รูป)</label>
+                    <div class="img-actions">
+                        <button type="button" class="camera-btn" onclick="document.getElementById('cameraInput').click()">ถ่ายรูป</button>
+                        <button type="button" class="image-upload-btn" onclick="document.getElementById('imageInput').click()">เลือกจากคลัง</button>
+                    </div>
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+                    <input type="file" id="imageInput" accept="image/*" multiple hidden>
+                    <div class="image-upload" id="imagePreview"></div>
+                    <p class="hint">ดำเนินการครบเมื่อมีรูปอย่างน้อย 1 รูป และกรอกกระแสครบ 3 เฟสในฟีดเดอร์อย่างน้อย 1 ชุด</p>
+                </div>
+                <div class="form-group">
+                    <label>หมายเหตุ</label>
+                    <textarea id="notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อผู้บันทึก (ไม่บังคับ)</label>
+                    <input type="text" id="updatedBy" placeholder="ชื่อหรือเบอร์ผู้ลงข้อมูล">
+                </div>
+                <div>
+                    <span class="block-label">ค่ากระแสแต่ละเฟส</span>
+                    <div class="feeders-container" id="feedersContainer"></div>
+                    <button type="button" class="add-feeder-btn" onclick="addFeeder()">+ เพิ่มฟีดเดอร์</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">ยกเลิก</button>
+                <button class="btn-primary" id="saveBtn" onclick="saveData()">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const COLORS = { pending: "#64748b", partial: "#eab308", completed: "#dc2626" };
+        const STATUS_TEXT = { pending: "รอดำเนินการ", partial: "ลงข้อมูลไม่ครบ", completed: "ดำเนินการแล้ว" };
+        const token = (location.pathname.split("/")[2] || "").trim();
+        const API = token ? `/f/${token}` : "";
+
+        let locations = [];
+        let currentId = null;
+        let map = null;
+        let markers = {};
+        let meMarker = null;
+        let accCircle = null;
+        let routeLine = null;
+        let watchId = null;
+        let myPos = null;
+        let myHeading = null;
+        let followMe = false;
+        let sortNearest = false;
+        let navTargetId = null;
+        let arrivedOnce = false;
+        let lastListPaint = 0;
+        let filter = "all";
+        let pendingFiles = [];
+        let removedFilenames = [];
+
+        function toast(msg) {
+            const el = document.getElementById("toast");
+            el.textContent = msg;
+            el.style.display = "block";
+            setTimeout(() => { el.style.display = "none"; }, 2200);
+        }
+
+        function pinIcon(color) {
+            return L.divIcon({
+                className: "",
+                html: `<div style="width:18px;height:18px;background:${color};border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.45)"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            });
+        }
+
+        function imageUrl(locId, filename) {
+            return `/uploads/${locId}/${filename}`;
+        }
+
+        async function api(path, options) {
+            const res = await fetch(API + path, options);
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || res.statusText);
+            }
+            if (res.status === 204) return null;
+            return res.json();
+        }
+
+        function initMap() {
+            map = L.map("map", { tap: true }).setView([11.82, 99.78], 11);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "© OpenStreetMap",
+                maxZoom: 19
+            }).addTo(map);
+            setTimeout(() => map.invalidateSize(), 300);
+            window.addEventListener("resize", () => map.invalidateSize());
+            map.on("dragstart", () => {
+                if (followMe) setFollow(false);
+            });
+        }
+
+        let tunnelPublicKey = "";
+
+        async function loadMeta() {
+            try {
+                const meta = await api("/api/meta");
+                const box = document.getElementById("shareLink");
+                const hint = document.getElementById("shareHint");
+                tunnelPublicKey = meta.tunnelPublicKey || "";
+                const keyBox = document.getElementById("tunnelKeyBox");
+                if (keyBox) keyBox.textContent = tunnelPublicKey || "";
+                if (meta.hosted) {
+                    document.getElementById("permTitle").textContent = "ลิงก์ออนไลน์ตลอด 24 ชม.";
+                    document.getElementById("permText").textContent = "ลิงก์นี้อยู่บนเซิร์ฟเวอร์คลาวด์ ใช้ได้แม้ปิดคอมพิวเตอร์";
+                } else {
+                    document.getElementById("permTitle").textContent = "ลิงก์นี้ยังผูกกับคอมพิวเตอร์";
+                    document.getElementById("permText").textContent = "ใช้ได้เฉพาะตอนเปิด start.bat ค้างไว้ ถ้าต้องการใช้ตอนปิดคอม ให้อ่านไฟล์ วิธีขึ้นคลาวด์.txt แล้วขึ้น Render";
+                }
+                if (meta.publicUrl) {
+                    if (box.value && box.value !== meta.publicUrl) {
+                        toast("ลิงก์อัปเดตแล้ว ส่งอันใหม่ในไลน์");
+                    }
+                    box.value = meta.publicUrl;
+                    hint.textContent = meta.tunnelNote || "ส่งลิงก์ล่าสุดในช่องนี้เท่านั้น";
+                    return true;
+                }
+                const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+                box.value = isLocal ? (meta.lanUrl || location.href) : location.href.split("#")[0];
+                hint.textContent = "กำลังสร้างลิงก์... รอสักครู่";
+            } catch {
+                document.getElementById("shareLink").value = location.href.split("#")[0];
+            }
+            return false;
+        }
+
+        function copyTunnelKey() {
+            if (!tunnelPublicKey) return toast("ยังไม่มีคีย์");
+            navigator.clipboard.writeText(tunnelPublicKey).then(() => toast("คัดลอกคีย์แล้ว")).catch(() => toast("คัดลอกไม่สำเร็จ"));
+        }
+
+        function openTunnelAdmin() {
+            window.open("https://admin.localhost.run/", "_blank");
+        }
+
+        async function confirmPermanent() {
+            try {
+                const res = await api("/api/tunnel/confirm", { method: "POST" });
+                toast(res.message || "ตั้งลิงก์ถาวรแล้ว");
+                await loadMeta();
+            } catch (e) {
+                toast("ยืนยันไม่สำเร็จ — รอลิงก์ขึ้นก่อน แล้วลงทะเบียนคีย์ที่ localhost.run");
+            }
+        }
+
+        async function waitForPublicLink() {
+            for (let i = 0; i < 60; i++) {
+                if (await loadMeta()) return;
+                await new Promise(r => setTimeout(r, 2000));
+            }
+        }
+
+        function shareLine() {
+            const url = document.getElementById("shareLink").value.trim();
+            if (!url || url.indexOf("http") !== 0) {
+                toast("รอลิงก์พร้อมก่อน แล้วค่อยส่งไลน์");
+                return;
+            }
+            const text = `ลิงก์เก็บข้อมูลหม้อแปลง\n${url}`;
+            location.href = "https://line.me/R/share?text=" + encodeURIComponent(text);
+        }
+
+        async function loadLocations(keepView) {
+            locations = await api("/api/locations");
+            drawMarkers(keepView);
+            renderList();
+            updateStats();
+        }
+
+        function drawMarkers(keepView) {
+            Object.values(markers).forEach(m => map.removeLayer(m));
+            markers = {};
+            const bounds = [];
+            locations.forEach(loc => {
+                const color = COLORS[loc.status] || COLORS.pending;
+                const marker = L.marker([loc.lat, loc.lng], { icon: pinIcon(color) }).addTo(map);
+                marker.bindPopup(() => popupHtml(loc));
+                markers[loc.id] = marker;
+                bounds.push([loc.lat, loc.lng]);
+            });
+            if (!keepView && bounds.length) map.fitBounds(bounds, { padding: [28, 28] });
+        }
+
+        function setMarkerColor(id, status) {
+            if (markers[id]) markers[id].setIcon(pinIcon(COLORS[status] || COLORS.pending));
+        }
+
+        function setFilter(next) {
+            filter = next;
+            document.querySelectorAll(".chip[data-filter]").forEach(ch => ch.classList.toggle("active", ch.dataset.filter === next));
+            renderList();
+        }
+
+        function locSummary(loc) {
+            const assignee = (loc.assignee || "").trim() || "—";
+            return { transformer: loc.transformer || "—", assignee };
+        }
+
+        function renderList() {
+            const q = (document.getElementById("searchBox").value || "").trim().toLowerCase();
+            const list = document.getElementById("locationList");
+            list.innerHTML = "";
+            let rows = locations
+                .filter(loc => filter === "all" || loc.status === filter)
+                .filter(loc => {
+                    if (!q) return true;
+                    const s = locSummary(loc);
+                    return [s.transformer, s.assignee].join(" ").toLowerCase().includes(q);
+                });
+            if (sortNearest && myPos) {
+                rows = rows.slice().sort((a, b) =>
+                    haversine(myPos, [a.lat, a.lng]) - haversine(myPos, [b.lat, b.lng])
+                );
+            }
+            rows.forEach(loc => {
+                    const s = locSummary(loc);
+                    const dist = myPos ? formatDist(haversine(myPos, [loc.lat, loc.lng])) : "";
+                    const div = document.createElement("div");
+                    div.className = `location-item ${loc.status}`;
+                    div.innerHTML = `
+                        <div class="item-row">
+                            <div>
+                                <div class="loc-main">${s.transformer}</div>
+                                <div class="loc-sub">ผู้รับผิดชอบ: ${s.assignee}</div>
+                                ${dist ? `<div class="dist-label">${dist}</div>` : ""}
+                                <span class="badge ${loc.status}">${STATUS_TEXT[loc.status]}</span>
+                            </div>
+                            <button type="button" class="mini-nav">นำทาง</button>
+                        </div>
+                    `;
+                    div.querySelector(".mini-nav").onclick = (ev) => {
+                        ev.stopPropagation();
+                        startNav(loc.id);
+                    };
+                    div.onclick = () => {
+                        map.setView([loc.lat, loc.lng], 16);
+                        openModal(loc.id);
+                    };
+                    list.appendChild(div);
+                });
+        }
+
+        function updateStats() {
+            const c = { completed: 0, partial: 0, pending: 0 };
+            locations.forEach(loc => { c[loc.status] = (c[loc.status] || 0) + 1; });
+            document.getElementById("totalCount").textContent = locations.length;
+            document.getElementById("completedCount").textContent = c.completed;
+            document.getElementById("partialCount").textContent = c.partial;
+            document.getElementById("pendingCount").textContent = c.pending;
+        }
+
+        function openModal(id) {
+            if (markers[id]) markers[id].closePopup();
+            currentId = id;
+            pendingFiles = [];
+            removedFilenames = [];
+            const loc = locations.find(l => l.id === id);
+            const s = locSummary(loc);
+            document.getElementById("modalTitle").textContent = `เพิ่มข้อมูล · ${s.transformer}`;
+            document.getElementById("locationInfo").innerHTML = `
+                <strong>หม้อแปลง: ${s.transformer}</strong>
+                ผู้รับผิดชอบ: ${s.assignee}
+                ${myPos ? "<br>ระยะจากคุณ: " + formatDist(haversine(myPos, [loc.lat, loc.lng])) : ""}
+            `;
+            const info = document.getElementById("locationInfo");
+            const navBtn = document.createElement("button");
+            navBtn.type = "button";
+            navBtn.className = "nav-in-modal";
+            navBtn.textContent = "นำทางมายังจุดนี้แบบเรียลไทม์";
+            navBtn.onclick = () => startNav(loc.id);
+            info.appendChild(navBtn);
+            document.getElementById("notes").value = loc.data.notes || "";
+            document.getElementById("updatedBy").value = loc.data.updatedBy || localStorage.getItem("pea-name") || "";
+            renderImages(loc);
+            const feeders = (loc.data.feeders && loc.data.feeders.length) ? loc.data.feeders : [{ name: "ฟีดเดอร์ 1", ia: "", ib: "", ic: "" }];
+            renderFeeders(feeders);
+            document.getElementById("dataModal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("dataModal").classList.remove("active");
+            currentId = null;
+            pendingFiles = [];
+        }
+
+        function renderImages(loc) {
+            const box = document.getElementById("imagePreview");
+            box.innerHTML = "";
+            (loc.data.images || []).forEach(img => {
+                if (removedFilenames.includes(img.filename)) return;
+                box.appendChild(previewNode(imageUrl(loc.id, img.filename), () => {
+                    removedFilenames.push(img.filename);
+                    renderImages(loc);
+                }));
+            });
+            pendingFiles.forEach((file, idx) => {
+                const url = URL.createObjectURL(file);
+                box.appendChild(previewNode(url, () => {
+                    pendingFiles.splice(idx, 1);
+                    renderImages(loc);
+                }));
+            });
+        }
+
+        function previewNode(src, onRemove) {
+            const div = document.createElement("div");
+            div.className = "image-preview";
+            div.innerHTML = `<img src="${src}" alt="preview"><button type="button" class="remove-btn">×</button>`;
+            div.querySelector(".remove-btn").onclick = onRemove;
+            return div;
+        }
+
+        function renderFeeders(feeders) {
+            const box = document.getElementById("feedersContainer");
+            box.innerHTML = "";
+            feeders.forEach((feeder, idx) => {
+                const wrap = document.createElement("div");
+                wrap.className = "feeder-block";
+                wrap.innerHTML = `
+                    <div class="feeder-head">
+                        <input type="text" class="feeder-name" value="${escapeAttr(feeder.name || ("ฟีดเดอร์ " + (idx + 1)))}" placeholder="ชื่อฟีดเดอร์">
+                        <button type="button" class="remove-feeder-btn">ลบ</button>
+                    </div>
+                    <div class="phase-inputs">
+                        <div><label>Ia (A)</label><input type="number" inputmode="decimal" step="0.01" class="ia" value="${feeder.ia || ""}" placeholder="0"></div>
+                        <div><label>Ib (A)</label><input type="number" inputmode="decimal" step="0.01" class="ib" value="${feeder.ib || ""}" placeholder="0"></div>
+                        <div><label>Ic (A)</label><input type="number" inputmode="decimal" step="0.01" class="ic" value="${feeder.ic || ""}" placeholder="0"></div>
+                    </div>
+                `;
+                wrap.querySelector(".remove-feeder-btn").onclick = () => {
+                    const all = collectFeeders();
+                    all.splice(idx, 1);
+                    renderFeeders(all.length ? all : [{ name: "ฟีดเดอร์ 1", ia: "", ib: "", ic: "" }]);
+                };
+                box.appendChild(wrap);
+            });
+        }
+
+        function escapeAttr(s) {
+            return String(s).replace(/"/g, "&quot;");
+        }
+
+        function collectFeeders() {
+            return [...document.querySelectorAll("#feedersContainer .feeder-block")].map((el, i) => ({
+                name: el.querySelector(".feeder-name").value.trim() || `ฟีดเดอร์ ${i + 1}`,
+                ia: el.querySelector(".ia").value,
+                ib: el.querySelector(".ib").value,
+                ic: el.querySelector(".ic").value
+            }));
+        }
+
+        function addFeeder() {
+            const all = collectFeeders();
+            all.push({ name: `ฟีดเดอร์ ${all.length + 1}`, ia: "", ib: "", ic: "" });
+            renderFeeders(all);
+        }
+
+        async function compressImage(file) {
+            const bitmap = await createImageBitmap(file);
+            const max = 1600;
+            let w = bitmap.width, h = bitmap.height;
+            if (w > max || h > max) {
+                const r = Math.min(max / w, max / h);
+                w = Math.round(w * r);
+                h = Math.round(h * r);
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+            return new Promise(resolve => {
+                canvas.toBlob(blob => resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" })), "image/jpeg", 0.8);
+            });
+        }
+
+        async function addPickedFiles(fileList) {
+            const loc = locations.find(l => l.id === currentId);
+            for (const file of fileList) {
+                try {
+                    pendingFiles.push(await compressImage(file));
+                } catch {
+                    pendingFiles.push(file);
+                }
+            }
+            renderImages(loc);
+        }
+
+        document.getElementById("imageInput").addEventListener("change", async (e) => {
+            const files = [...e.target.files];
+            e.target.value = "";
+            await addPickedFiles(files);
+        });
+        document.getElementById("cameraInput").addEventListener("change", async (e) => {
+            const files = [...e.target.files];
+            e.target.value = "";
+            await addPickedFiles(files);
+        });
+
+        async function saveData() {
+            const loc = locations.find(l => l.id === currentId);
+            const btn = document.getElementById("saveBtn");
+            btn.disabled = true;
+            btn.textContent = "กำลังบันทึก...";
+            try {
+                const updatedBy = document.getElementById("updatedBy").value.trim();
+                localStorage.setItem("pea-name", updatedBy);
+                await api(`/api/locations/${loc.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        notes: document.getElementById("notes").value,
+                        feeders: collectFeeders(),
+                        updatedBy
+                    })
+                });
+                for (const filename of removedFilenames) {
+                    await api(`/api/locations/${loc.id}/images/${encodeURIComponent(filename)}`, { method: "DELETE" });
+                }
+                if (pendingFiles.length) {
+                    const form = new FormData();
+                    pendingFiles.forEach(f => form.append("images", f, f.name));
+                    await api(`/api/locations/${loc.id}/images`, { method: "POST", body: form });
+                }
+                await loadLocations(true);
+                toast("บันทึกข้อมูลแล้ว");
+                closeModal();
+            } catch (err) {
+                toast("บันทึกไม่สำเร็จ: ตรวจว่าเปิดผ่านเซิร์ฟเวอร์แล้ว");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "บันทึกข้อมูล";
+            }
+        }
+
+        function copyLink() {
+            const el = document.getElementById("shareLink");
+            el.select();
+            navigator.clipboard.writeText(el.value).then(() => {
+                document.getElementById("successMsg").style.display = "block";
+                setTimeout(() => document.getElementById("successMsg").style.display = "none", 2000);
+            }).catch(() => {
+                document.execCommand("copy");
+                document.getElementById("successMsg").style.display = "block";
+            });
+        }
+
+        function haversine(a, b) {
+            const R = 6371000;
+            const toRad = d => d * Math.PI / 180;
+            const dLat = toRad(b[0] - a[0]);
+            const dLng = toRad(b[1] - a[1]);
+            const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+            return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+        }
+
+        function bearingTo(a, b) {
+            const toRad = d => d * Math.PI / 180;
+            const y = Math.sin(toRad(b[1] - a[1])) * Math.cos(toRad(b[0]));
+            const x = Math.cos(toRad(a[0])) * Math.sin(toRad(b[0])) -
+                Math.sin(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.cos(toRad(b[1] - a[1]));
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+
+        function formatDist(m) {
+            if (m < 1000) return Math.round(m) + " ม.";
+            return (m / 1000).toFixed(2) + " กม.";
+        }
+
+        function cardinal(deg) {
+            const dirs = ["เหนือ", "ตะวันออกเฉียงเหนือ", "ตะวันออก", "ตะวันออกเฉียงใต้", "ใต้", "ตะวันตกเฉียงใต้", "ตะวันตก", "ตะวันตกเฉียงเหนือ"];
+            return dirs[Math.round(deg / 45) % 8];
+        }
+
+        function popupHtml(loc) {
+            const s = locSummary(loc);
+            const dist = myPos ? `<div>ระยะ ${formatDist(haversine(myPos, [loc.lat, loc.lng]))}</div>` : "";
+            return `<b>${s.transformer}</b><br>ผู้รับผิดชอบ: ${s.assignee}${dist}
+                <div style="margin-top:8px;display:flex;gap:6px">
+                    <button type="button" class="mini-nav" onclick="startNav(${loc.id})">นำทาง</button>
+                    <button type="button" class="mini-nav" style="background:#4f46e5" onclick="openModal(${loc.id})">กรอกข้อมูล</button>
+                </div>`;
+        }
+
+        function userIcon(heading) {
+            const rot = heading == null ? 0 : heading;
+            return L.divIcon({
+                className: "",
+                html: `<div class="me-wrap">
+                    <div class="me-pulse"></div>
+                    <div class="me-core"></div>
+                    <div class="me-head" style="transform:rotate(${rot}deg);opacity:${heading == null ? 0 : 1}"></div>
+                </div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+        }
+
+        function geoError(err) {
+            const msg = {
+                1: "ยังไม่ได้อนุญาตตำแหน่ง เปิด GPS แล้วอนุญาตให้เบราว์เซอร์ใช้ตำแหน่ง",
+                2: "อ่านตำแหน่งไม่ได้ ลองออกจากที่อับสัญญาณ",
+                3: "รอสัญญาณ GPS นานเกินไป"
+            }[err && err.code] || "ไม่สามารถอ่านตำแหน่งได้";
+            toast(msg);
+        }
+
+        function listenHeading() {
+            const apply = (ev) => {
+                let h = ev.webkitCompassHeading;
+                if (h == null && ev.alpha != null) h = (360 - ev.alpha) % 360;
+                if (h == null || Number.isNaN(h)) return;
+                myHeading = h;
+                if (meMarker) meMarker.setIcon(userIcon(myHeading));
+                updateNavHud();
+            };
+            window.addEventListener("deviceorientationabsolute", apply, true);
+            window.addEventListener("deviceorientation", apply, true);
+        }
+
+        async function requestHeadingPermission() {
+            try {
+                if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission) {
+                    await DeviceOrientationEvent.requestPermission();
+                }
+            } catch (_) {}
+            listenHeading();
+        }
+
+        function onPosition(pos) {
+            myPos = [pos.coords.latitude, pos.coords.longitude];
+            const acc = pos.coords.accuracy || 25;
+            if (pos.coords.heading != null && !Number.isNaN(pos.coords.heading) && pos.coords.speed > 0.4) {
+                myHeading = pos.coords.heading;
+            }
+            if (!meMarker) {
+                meMarker = L.marker(myPos, { icon: userIcon(myHeading), zIndexOffset: 1000 }).addTo(map);
+                accCircle = L.circle(myPos, { radius: acc, color: "#2563eb", weight: 1, fillOpacity: 0.08 }).addTo(map);
+            } else {
+                meMarker.setLatLng(myPos);
+                meMarker.setIcon(userIcon(myHeading));
+                accCircle.setLatLng(myPos);
+                accCircle.setRadius(acc);
+            }
+            if (followMe) map.setView(myPos, Math.max(map.getZoom(), 17), { animate: true });
+            updateRoute();
+            updateNavHud();
+            const now = Date.now();
+            if (now - lastListPaint > 1500) {
+                lastListPaint = now;
+                renderList();
+            }
+        }
+
+        function toggleTracking() {
+            if (watchId != null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                document.getElementById("trackBtn").classList.remove("active");
+                document.getElementById("trackBtn").textContent = "ติดตามตำแหน่ง";
+                toast("หยุดติดตามตำแหน่งแล้ว");
+                return;
+            }
+            startTracking(true);
+        }
+
+        function startTracking(fromClick) {
+            if (!navigator.geolocation) return toast("เบราว์เซอร์ไม่รองรับตำแหน่ง");
+            if (watchId != null) return;
+            if (fromClick) requestHeadingPermission();
+            document.getElementById("trackBtn").classList.add("active");
+            document.getElementById("trackBtn").textContent = "กำลังติดตาม";
+            watchId = navigator.geolocation.watchPosition(onPosition, geoError, {
+                enableHighAccuracy: true,
+                maximumAge: 1000,
+                timeout: 15000
+            });
+            setFollow(true);
+            toast("เปิดติดตามตำแหน่งแบบเรียลไทม์แล้ว");
+        }
+
+        function setFollow(on) {
+            followMe = on;
+            document.getElementById("followBtn").classList.toggle("active", on);
+        }
+
+        function toggleFollow() {
+            if (watchId == null) startTracking(true);
+            setFollow(!followMe);
+            if (followMe && myPos) map.setView(myPos, Math.max(map.getZoom(), 17));
+        }
+
+        function toggleNearest() {
+            sortNearest = !sortNearest;
+            document.getElementById("nearChip").classList.toggle("active", sortNearest);
+            if (sortNearest && watchId == null) startTracking(true);
+            renderList();
+        }
+
+        function startNav(id) {
+            navTargetId = id;
+            arrivedOnce = false;
+            closeModal();
+            if (markers[id]) markers[id].closePopup();
+            const loc = locations.find(l => l.id === id);
+            if (loc) map.setView([loc.lat, loc.lng], 16);
+            document.getElementById("navHud").classList.add("active");
+            if (watchId == null) startTracking(true);
+            setFollow(true);
+            updateRoute();
+            updateNavHud();
+        }
+
+        function stopNav() {
+            navTargetId = null;
+            document.getElementById("navHud").classList.remove("active");
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+        }
+
+        function openTargetForm() {
+            if (navTargetId != null) openModal(navTargetId);
+        }
+
+        function updateRoute() {
+            if (!myPos || navTargetId == null) {
+                if (routeLine) {
+                    map.removeLayer(routeLine);
+                    routeLine = null;
+                }
+                return;
+            }
+            const loc = locations.find(l => l.id === navTargetId);
+            if (!loc) return;
+            const path = [myPos, [loc.lat, loc.lng]];
+            if (!routeLine) {
+                routeLine = L.polyline(path, { color: "#2563eb", weight: 4, dashArray: "8 6" }).addTo(map);
+            } else {
+                routeLine.setLatLngs(path);
+            }
+        }
+
+        function updateNavHud() {
+            if (navTargetId == null) return;
+            const loc = locations.find(l => l.id === navTargetId);
+            if (!loc) return;
+            const s = locSummary(loc);
+            document.getElementById("navTitle").textContent = s.transformer + " · " + s.assignee;
+            if (!myPos) {
+                document.getElementById("navDist").textContent = "--";
+                document.getElementById("navDir").textContent = "รอสัญญาณ GPS";
+                return;
+            }
+            const dist = haversine(myPos, [loc.lat, loc.lng]);
+            const brg = bearingTo(myPos, [loc.lat, loc.lng]);
+            document.getElementById("navDist").textContent = formatDist(dist);
+            let dirText = "ทิศ" + cardinal(brg);
+            if (myHeading != null) {
+                let rel = (brg - myHeading + 360) % 360;
+                if (rel > 180) rel -= 360;
+                if (Math.abs(rel) < 12) dirText += " · ตรงหน้า";
+                else if (rel > 0) dirText += " · เอียงขวา " + Math.round(Math.abs(rel)) + "°";
+                else dirText += " · เอียงซ้าย " + Math.round(Math.abs(rel)) + "°";
+                document.getElementById("compassNeedle").style.transform = "rotate(" + rel + "deg)";
+            } else {
+                document.getElementById("compassNeedle").style.transform = "rotate(" + brg + "deg)";
+            }
+            if (dist <= 25) {
+                dirText = "ถึงจุดแล้ว";
+                if (!arrivedOnce) {
+                    arrivedOnce = true;
+                    toast("ถึงจุด " + loc.transformer + " แล้ว");
+                }
+            }
+            document.getElementById("navDir").textContent = dirText + " · ความแม่นยำ GPS ประมาณ " + Math.round((accCircle && accCircle.getRadius()) || 0) + " ม.";
+        }
+
+        document.getElementById("dataModal").addEventListener("click", e => {
+            if (e.target.id === "dataModal") closeModal();
+        });
+
+        initMap();
+        if (/Line\//i.test(navigator.userAgent)) {
+            document.getElementById("lineBanner").style.display = "block";
+        }
+        waitForPublicLink();
+        setInterval(() => loadMeta().catch(() => {}), 15000);
+        loadLocations(false).catch(() => {
+            toast("ต้องเปิดผ่าน start.bat จึงจะบันทึกและแชร์ลิงก์ได้");
+        });
+        setInterval(() => {
+            if (!currentId) loadLocations(true).catch(() => {});
+        }, 12000);
+    </script>
+</body>
+</html>

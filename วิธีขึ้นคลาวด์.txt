@@ -1,0 +1,27 @@
+วิธีทำให้ลิงก์ใช้ได้แม้ปิดคอมพิวเตอร์
+=====================================
+
+ลิงก์แบบ start.bat / localhost.run ใช้ไม่ได้ตอนปิดคอม
+เพราะแอปวิ่งอยู่บนเครื่องนี้ ต้องย้ายไปเซิร์ฟเวอร์ออนไลน์
+
+แนะนำ: Render (ฟรี)
+
+1. สมัคร GitHub ที่ https://github.com แล้วสร้าง Repository ใหม่
+2. อัปโหลดโฟลเดอร์นี้ทั้งหมดขึ้น GitHub (ลากไฟล์ขึ้นเว็บก็ได้)
+   ไฟล์สำคัญ: server.py, trpjk.html, Rak-D.xlsx, requirements.txt,
+   Procfile, data/locations.json
+3. เปิด https://render.com สมัครด้วย GitHub
+4. กด New + แล้วเลือก Web Service
+5. เลือก repository ที่อัปโหลดไว้
+6. ตั้งค่าดังนี้
+   Build Command:  pip install -r requirements.txt
+   Start Command:  gunicorn server:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+7. กด Deploy
+8. เมื่อเสร็จ จะได้ลิงก์ประมาณ
+   https://ชื่อแอป.onrender.com/f/รหัส
+9. ส่งลิงก์นั้นในไลน์ ได้เลย ปิดคอมเครื่องนี้ได้
+
+หมายเหตุ
+- Render แผนฟรีอาจหลับถ้าไม่มีคนเข้าประมาณ 15 นาที ครั้งแรกที่เปิดอาจช้า 30-60 วินาที
+- รูปที่อัปโหลดบนแผนฟรีอาจหายเมื่อ Render สร้างเครื่องใหม่ ถ้าใช้จริงจังควรอัปเกรดแผนที่มีดิสก์ถาวร
+- อย่าลบไฟล์ data/locations.json และ Rak-D.xlsx

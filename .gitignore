@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+data/uploads/
+data/public_url.txt
+data/tunnel_key
+data/tunnel_key.pub
+data/tunnel.log
+data/ssh_known_hosts
+data/*.tmp
+.venv/
+venv/
