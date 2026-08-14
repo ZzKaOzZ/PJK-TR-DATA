@@ -235,7 +235,7 @@
             font-family: inherit;
         }
         .share-link-input { font-size: 12px; word-break: break-all; background: #fff; }
-        .copy-link-btn, .btn-primary, .btn-secondary, .add-feeder-btn, .image-upload-btn, .line-btn, .camera-btn {
+        .copy-link-btn, .btn-primary, .btn-secondary, .add-feeder-btn, .image-upload-btn, .line-btn, .camera-btn, .export-btn {
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -253,6 +253,13 @@
             background: #06c755;
             color: #fff;
             width: 100%;
+            padding: 12px 8px;
+        }
+        .export-btn {
+            width: 100%;
+            background: #059669;
+            color: #fff;
+            margin-top: 10px;
             padding: 12px 8px;
         }
         .line-banner {
@@ -449,6 +456,8 @@
                     <div class="stat-box"><div class="number" id="partialCount" style="color:#ca8a04">0</div><div class="label">ไม่ครบ</div></div>
                     <div class="stat-box"><div class="number" id="pendingCount" style="color:#64748b">0</div><div class="label">รอดำเนินการ</div></div>
                 </div>
+                <button type="button" class="export-btn" onclick="exportExcel()">ส่งออก Excel (ข้อมูล + รูป)</button>
+                <p class="hint" id="exportHint">ดาวน์โหลดข้อมูลทั้งหมดพร้อมรูปแนบในไฟล์ Excel ใช้สำรองข้อมูล</p>
                 <input class="search-input" id="searchBox" placeholder="ค้นหา หม้อแปลง / ผู้รับผิดชอบ" oninput="renderList()">
                 <div class="filters">
                     <button class="chip active" data-filter="all" onclick="setFilter('all')">ทั้งหมด</button>
@@ -588,7 +597,9 @@
                 if (keyBox) keyBox.textContent = tunnelPublicKey || "";
                 if (meta.hosted) {
                     document.getElementById("permTitle").textContent = "ลิงก์ออนไลน์ตลอด 24 ชม.";
-                    document.getElementById("permText").textContent = "ลิงก์นี้อยู่บนเซิร์ฟเวอร์คลาวด์ ใช้ได้แม้ปิดคอมพิวเตอร์";
+                    document.getElementById("permText").textContent = "ลิงก์ Render ใช้ได้แม้ปิดคอม แต่รูปที่อัปโหลดอาจหายเมื่อเซิร์ฟเวอร์รีสตาร์ท (แผนฟรี) ไม่ใช่เพราะเปิดลิงก์ใหม่ — ควรส่งออก Excel สำรองเป็นประจำ";
+                    const exportHint = document.getElementById("exportHint");
+                    if (exportHint) exportHint.textContent = "แนะนำส่งออก Excel ทุกวันหรือหลังลงข้อมูลสำคัญ — รูปจะถูกแนบในไฟล์";
                 } else {
                     document.getElementById("permTitle").textContent = "ลิงก์นี้ยังผูกกับคอมพิวเตอร์";
                     document.getElementById("permText").textContent = "ใช้ได้เฉพาะตอนเปิด start.bat ค้างไว้ ถ้าต้องการใช้ตอนปิดคอม ให้อ่านไฟล์ วิธีขึ้นคลาวด์.txt แล้วขึ้น Render";
@@ -946,6 +957,11 @@
                 document.execCommand("copy");
                 document.getElementById("successMsg").style.display = "block";
             });
+        }
+
+        function exportExcel() {
+            toast("กำลังสร้างไฟล์ Excel...");
+            window.location.href = `${API}/api/export`;
         }
 
         function haversine(a, b) {

@@ -14,7 +14,9 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Flask, jsonify, request, send_from_directory, abort, redirect, url_for
+from io import BytesIO
+
+from flask import Flask, jsonify, request, send_from_directory, send_file, abort, redirect, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 ROOT = Path(__file__).resolve().parent
@@ -196,6 +198,179 @@ def loc_key(loc_id) -> str:
     return str(loc_id)
 
 
+STATUS_LABEL = {
+    "pending": "รอดำเนินการ",
+    "partial": "ลงข้อมูลไม่ครบ",
+    "completed": "ดำเนินการแล้ว",
+}
+
+THUMB_MAX_W = 120
+THUMB_MAX_H = 90
+
+
+def _excel_image_source(path: Path) -> BytesIO | Path | None:
+    if not path.is_file():
+        return None
+    try:
+        from PIL import Image as PILImage
+
+        with PILImage.open(path) as im:
+            im = im.convert("RGB")
+            im.thumbnail((THUMB_MAX_W, THUMB_MAX_H))
+            bio = BytesIO()
+            im.save(bio, format="JPEG", quality=88)
+            bio.seek(0)
+            return bio
+    except Exception:
+        if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".webp"}:
+            return path
+        return None
+
+
+def build_export_xlsx() -> BytesIO:
+    from openpyxl import Workbook
+    from openpyxl.drawing.image import Image as XLImage
+    from openpyxl.styles import Alignment, Font
+    from openpyxl.utils import get_column_letter
+
+    with lock:
+        locs = read_json(LOCATIONS_FILE, [])
+        saved = submissions()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "ข้อมูลหม้อแปลง"
+
+    headers = [
+        "ลำดับ",
+        "ID",
+        "หม้อแปลง",
+        "Work Order",
+        "ผู้รับผิดชอบ",
+        "ที่อยู่",
+        "Lat",
+        "Lng",
+        "สถานะ",
+        "หมายเหตุ",
+        "ฟีดเดอร์ / กระแส (A)",
+        "ผู้บันทึก",
+        "อัปเดตล่าสุด",
+        "จำนวนรูป",
+    ]
+    max_images = 0
+    rows_data = []
+    for loc in locs:
+        entry = saved.get(loc_key(loc["id"]), {})
+        images = entry.get("images") or []
+        max_images = max(max_images, len(images))
+        rows_data.append((loc, entry, images))
+
+    for i in range(1, max_images + 1):
+        headers.append(f"รูป {i}")
+
+    header_font = Font(bold=True)
+    for col, title in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=title)
+        cell.font = header_font
+        cell.alignment = Alignment(vertical="center", wrap_text=True)
+
+    ws.freeze_panes = "A2"
+    img_col_start = len(headers) - max_images + 1 if max_images else len(headers) + 1
+
+    for idx, (loc, entry, images) in enumerate(rows_data, 1):
+        row = idx + 1
+        status = location_status(entry)
+        feeders = entry.get("feeders") or []
+        feeder_lines = []
+        for f in feeders:
+            name = str(f.get("name") or "").strip() or "ฟีดเดอร์"
+            feeder_lines.append(
+                f"{name}: Ia={f.get('ia', '') or '-'} Ib={f.get('ib', '') or '-'} Ic={f.get('ic', '') or '-'}"
+            )
+        feeder_text = "\n".join(feeder_lines)
+
+        values = [
+            idx,
+            loc.get("id"),
+            loc.get("transformer") or "",
+            loc.get("wo") or "",
+            loc.get("assignee") or "",
+            loc.get("address") or "",
+            loc.get("lat"),
+            loc.get("lng"),
+            STATUS_LABEL.get(status, status),
+            entry.get("notes") or "",
+            feeder_text,
+            entry.get("updatedBy") or "",
+            entry.get("updatedAt") or entry.get("finishedAt") or "",
+            len(images),
+        ]
+        for col, value in enumerate(values, 1):
+            cell = ws.cell(row=row, column=col, value=value)
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+        row_height = 60
+        for img_idx, img_rec in enumerate(images):
+            filename = img_rec.get("filename") or ""
+            if not filename:
+                continue
+            src = _excel_image_source(UPLOAD_DIR / str(loc["id"]) / filename)
+            if not src:
+                ws.cell(row=row, column=img_col_start + img_idx, value=f"(ไม่พบไฟล์: {filename})")
+                continue
+            try:
+                xl_img = XLImage(src)
+                scale = min(THUMB_MAX_W / xl_img.width, THUMB_MAX_H / xl_img.height, 1.0)
+                xl_img.width = max(1, int(xl_img.width * scale))
+                xl_img.height = max(1, int(xl_img.height * scale))
+                col_letter = get_column_letter(img_col_start + img_idx)
+                ws.add_image(xl_img, f"{col_letter}{row}")
+                row_height = max(row_height, xl_img.height * 0.75 + 12)
+                ws.column_dimensions[col_letter].width = 16
+            except Exception:
+                ws.cell(row=row, column=img_col_start + img_idx, value=f"(เปิดรูปไม่ได้: {filename})")
+
+        if images:
+            ws.row_dimensions[row].height = row_height
+
+    widths = [6, 6, 18, 12, 14, 28, 10, 10, 14, 24, 28, 12, 20, 8]
+    for col, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(col)].width = width
+
+    ws2 = wb.create_sheet("ฟีดเดอร์")
+    feeder_headers = [
+        "ID",
+        "หม้อแปลง",
+        "ผู้รับผิดชอบ",
+        "ชื่อฟีดเดอร์",
+        "Ia (A)",
+        "Ib (A)",
+        "Ic (A)",
+    ]
+    for col, title in enumerate(feeder_headers, 1):
+        cell = ws2.cell(row=1, column=col, value=title)
+        cell.font = header_font
+    frow = 2
+    for loc, entry, _ in rows_data:
+        feeders = entry.get("feeders") or []
+        if not feeders:
+            continue
+        for f in feeders:
+            ws2.cell(row=frow, column=1, value=loc.get("id"))
+            ws2.cell(row=frow, column=2, value=loc.get("transformer") or "")
+            ws2.cell(row=frow, column=3, value=loc.get("assignee") or "")
+            ws2.cell(row=frow, column=4, value=f.get("name") or "")
+            ws2.cell(row=frow, column=5, value=f.get("ia") or "")
+            ws2.cell(row=frow, column=6, value=f.get("ib") or "")
+            ws2.cell(row=frow, column=7, value=f.get("ic") or "")
+            frow += 1
+
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    return bio
+
+
 def require_token() -> None:
     cfg = load_config()
     token = request.view_args.get("token") if request.view_args else None
@@ -327,7 +502,7 @@ def api_meta(token=None):
                 "tunnelAdminUrl": "",
                 "linkPermanent": True,
                 "hosted": True,
-                "tunnelNote": "ลิงก์นี้อยู่บนเซิร์ฟเวอร์ออนไลน์ ใช้ได้แม้ปิดคอมพิวเตอร์เครื่องนี้",
+                "tunnelNote": "ลิงก์คงที่บนคลาวด์ · รูปที่อัปโหลดอาจหายเมื่อ Render รีสตาร์ท (แผนฟรี) ควรกดส่งออก Excel สำรองเป็นประจำ",
                 "port": PORT,
             }
         )
@@ -500,6 +675,22 @@ def api_delete_image(loc_id, filename, token=None):
             path.unlink()
         status = location_status(current)
     return jsonify({"ok": True, "status": status})
+
+
+@app.route("/api/export")
+@app.route("/f/<token>/api/export")
+def api_export(token=None):
+    if token:
+        require_token()
+    stamp = datetime.now().strftime("%Y%m%d_%H%M")
+    filename = f"PEA_ข้อมูลหม้อแปลง_{stamp}.xlsx"
+    bio = build_export_xlsx()
+    return send_file(
+        bio,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 @app.route("/uploads/<int:loc_id>/<path:filename>")
