@@ -170,6 +170,8 @@ def feeder_complete(feeder: dict) -> bool:
 def location_status(entry: dict | None) -> str:
     if not entry:
         return "pending"
+    if entry.get("finished"):
+        return "completed"
     images = entry.get("images") or []
     feeders = entry.get("feeders") or []
     notes = (entry.get("notes") or "").strip()
@@ -177,10 +179,7 @@ def location_status(entry: dict | None) -> str:
     has_partial_current = any(
         str(f.get(k) or "").strip() for f in feeders for k in ("ia", "ib", "ic")
     )
-    complete = len(images) > 0 and has_current
-    if complete:
-        return "completed"
-    if images or notes or has_partial_current:
+    if images or notes or has_partial_current or has_current:
         return "partial"
     return "pending"
 
@@ -392,6 +391,7 @@ def api_locations(token=None):
                     "notes": entry.get("notes", ""),
                     "feeders": entry.get("feeders", []),
                     "images": entry.get("images", []),
+                    "finished": bool(entry.get("finished")),
                     "updatedAt": entry.get("updatedAt"),
                     "updatedBy": entry.get("updatedBy", ""),
                 },
@@ -428,6 +428,9 @@ def api_save_location(loc_id, token=None):
         current["notes"] = str(payload.get("notes") or "")
         current["feeders"] = cleaned
         current["images"] = current.get("images") or []
+        if payload.get("finished") is True:
+            current["finished"] = True
+            current["finishedAt"] = utc_now()
         current["updatedAt"] = utc_now()
         current["updatedBy"] = str(payload.get("updatedBy") or "")[:80]
         saved[key] = current

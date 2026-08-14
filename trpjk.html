@@ -110,6 +110,9 @@
         }
         .nav-stop { background: #fecaca; color: #991b1b; }
         .nav-open { background: #c7d2fe; color: #312e81; }
+        .nav-gmaps { background: #1a73e8; color: #fff; }
+        .nav-in-modal { background: #0f766e; color: #fff; width: 100%; padding: 10px; margin-top: 8px; }
+        .nav-in-modal.gmaps { background: #1a73e8; margin-top: 6px; }
         .compass {
             position: absolute;
             right: 10px;
@@ -164,7 +167,6 @@
             background: #2563eb; color: #fff; border: none; border-radius: 6px;
             padding: 8px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
         }
-        .nav-in-modal { background: #0f766e; color: #fff; width: 100%; padding: 10px; margin-top: 8px; }
         .sidebar {
             background: #fff;
             border-radius: 14px;
@@ -366,6 +368,8 @@
         .add-feeder-btn { background: #16a34a; color: #fff; padding: 10px 14px; margin-top: 4px; }
         .remove-feeder-btn { background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px; }
         .btn-primary { background: #4f46e5; color: #fff; padding: 10px 18px; }
+        .btn-finish { background: #dc2626; color: #fff; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        .btn-finish:disabled { background: #9ca3af; cursor: default; }
         .btn-secondary { background: #e5e7eb; color: #111827; padding: 10px 18px; }
         .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
         .toast {
@@ -382,7 +386,7 @@
             .modal { padding: 0; }
             .modal-content { width: 100%; margin: 0; min-height: 100dvh; border-radius: 0; }
             .modal-footer { position: sticky; bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-            .btn-primary, .btn-secondary, .add-feeder-btn, .image-upload-btn, .camera-btn { min-height: 44px; }
+            .btn-primary, .btn-secondary, .btn-finish, .add-feeder-btn, .image-upload-btn, .camera-btn { min-height: 44px; }
             .map-controls { top: auto; bottom: 88px; }
             .nav-hud { right: 12px; left: 12px; top: 8px; }
             .map-legend { left: 12px; bottom: 12px; }
@@ -402,8 +406,9 @@
                 <div class="nav-dist" id="navDist">--</div>
                 <div class="nav-dir" id="navDir">รอสัญญาณ GPS</div>
                 <div class="nav-actions">
+                    <button class="nav-gmaps" onclick="openGoogleMaps()">Google Maps</button>
                     <button class="nav-open" onclick="openTargetForm()">กรอกข้อมูล</button>
-                    <button class="nav-stop" onclick="stopNav()">หยุดนำทาง</button>
+                    <button class="nav-stop" onclick="stopNav()">หยุด</button>
                 </div>
             </div>
             <div class="map-controls">
@@ -474,7 +479,7 @@
                     <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                     <input type="file" id="imageInput" accept="image/*" multiple hidden>
                     <div class="image-upload" id="imagePreview"></div>
-                    <p class="hint">ดำเนินการครบเมื่อมีรูปอย่างน้อย 1 รูป และกรอกกระแสครบ 3 เฟสในฟีดเดอร์อย่างน้อย 1 ชุด</p>
+                    <p class="hint">กดบันทึกเพื่อเก็บข้อมูลชั่วคราว (สีเหลือง) · กดเสร็จสิ้นเมื่อทำงานครบแล้ว (เปลี่ยนเป็นสีแดง)</p>
                 </div>
                 <div class="form-group">
                     <label>หมายเหตุ</label>
@@ -492,7 +497,8 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeModal()">ยกเลิก</button>
-                <button class="btn-primary" id="saveBtn" onclick="saveData()">บันทึกข้อมูล</button>
+                <button class="btn-primary" id="saveBtn" onclick="saveData(false)">บันทึกข้อมูล</button>
+                <button class="btn-finish" id="finishBtn" onclick="saveData(true)">เสร็จสิ้น</button>
             </div>
         </div>
     </div>
@@ -511,6 +517,10 @@
         let meMarker = null;
         let accCircle = null;
         let routeLine = null;
+        let roadRoute = null;
+        let lastRoutePos = null;
+        let lastRouteAt = 0;
+        let routeFetching = false;
         let watchId = null;
         let myPos = null;
         let myHeading = null;
@@ -742,14 +752,24 @@
             const navBtn = document.createElement("button");
             navBtn.type = "button";
             navBtn.className = "nav-in-modal";
-            navBtn.textContent = "นำทางมายังจุดนี้แบบเรียลไทม์";
+            navBtn.textContent = "แสดงเส้นทางตามถนนในแอป";
             navBtn.onclick = () => startNav(loc.id);
             info.appendChild(navBtn);
+            const gmapsBtn = document.createElement("button");
+            gmapsBtn.type = "button";
+            gmapsBtn.className = "nav-in-modal gmaps";
+            gmapsBtn.textContent = "เปิดนำทางใน Google Maps";
+            gmapsBtn.onclick = () => { startNav(loc.id); openGoogleMaps(); };
+            info.appendChild(gmapsBtn);
             document.getElementById("notes").value = loc.data.notes || "";
             document.getElementById("updatedBy").value = loc.data.updatedBy || localStorage.getItem("pea-name") || "";
             renderImages(loc);
             const feeders = (loc.data.feeders && loc.data.feeders.length) ? loc.data.feeders : [{ name: "ฟีดเดอร์ 1", ia: "", ib: "", ic: "" }];
             renderFeeders(feeders);
+            const finishBtn = document.getElementById("finishBtn");
+            const done = loc.data.finished || loc.status === "completed";
+            finishBtn.disabled = done;
+            finishBtn.textContent = done ? "เสร็จสิ้นแล้ว" : "เสร็จสิ้น";
             document.getElementById("dataModal").classList.add("active");
         }
 
@@ -872,23 +892,17 @@
             await addPickedFiles(files);
         });
 
-        async function saveData() {
+        async function saveData(markFinished) {
             const loc = locations.find(l => l.id === currentId);
-            const btn = document.getElementById("saveBtn");
-            btn.disabled = true;
-            btn.textContent = "กำลังบันทึก...";
+            const saveBtn = document.getElementById("saveBtn");
+            const finishBtn = document.getElementById("finishBtn");
+            saveBtn.disabled = true;
+            finishBtn.disabled = true;
+            saveBtn.textContent = "กำลังบันทึก...";
+            if (markFinished) finishBtn.textContent = "กำลังเสร็จสิ้น...";
             try {
                 const updatedBy = document.getElementById("updatedBy").value.trim();
                 localStorage.setItem("pea-name", updatedBy);
-                await api(`/api/locations/${loc.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        notes: document.getElementById("notes").value,
-                        feeders: collectFeeders(),
-                        updatedBy
-                    })
-                });
                 for (const filename of removedFilenames) {
                     await api(`/api/locations/${loc.id}/images/${encodeURIComponent(filename)}`, { method: "DELETE" });
                 }
@@ -897,15 +911,28 @@
                     pendingFiles.forEach(f => form.append("images", f, f.name));
                     await api(`/api/locations/${loc.id}/images`, { method: "POST", body: form });
                 }
+                const payload = {
+                    notes: document.getElementById("notes").value,
+                    feeders: collectFeeders(),
+                    updatedBy
+                };
+                if (markFinished) payload.finished = true;
+                await api(`/api/locations/${loc.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
                 await loadLocations(true);
-                toast("บันทึกข้อมูลแล้ว");
+                toast(markFinished ? "เสร็จสิ้นแล้ว · หมุดเปลี่ยนเป็นสีแดง" : "บันทึกข้อมูลแล้ว");
                 closeModal();
             } catch (err) {
                 toast("บันทึกไม่สำเร็จ: ตรวจว่าเปิดผ่านเซิร์ฟเวอร์แล้ว");
                 console.error(err);
             } finally {
-                btn.disabled = false;
-                btn.textContent = "บันทึกข้อมูล";
+                saveBtn.disabled = false;
+                finishBtn.disabled = loc?.data?.finished || loc?.status === "completed";
+                saveBtn.textContent = "บันทึกข้อมูล";
+                finishBtn.textContent = (loc?.data?.finished || loc?.status === "completed") ? "เสร็จสิ้นแล้ว" : "เสร็จสิ้น";
             }
         }
 
@@ -952,8 +979,9 @@
             const s = locSummary(loc);
             const dist = myPos ? `<div>ระยะ ${formatDist(haversine(myPos, [loc.lat, loc.lng]))}</div>` : "";
             return `<b>${s.transformer}</b><br>ผู้รับผิดชอบ: ${s.assignee}${dist}
-                <div style="margin-top:8px;display:flex;gap:6px">
-                    <button type="button" class="mini-nav" onclick="startNav(${loc.id})">นำทาง</button>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <button type="button" class="mini-nav" onclick="startNav(${loc.id})">เส้นทางในแอป</button>
+                    <button type="button" class="mini-nav" style="background:#1a73e8" onclick="startNav(${loc.id});openGoogleMaps()">Google Maps</button>
                     <button type="button" class="mini-nav" style="background:#4f46e5" onclick="openModal(${loc.id})">กรอกข้อมูล</button>
                 </div>`;
         }
@@ -1076,6 +1104,9 @@
         function startNav(id) {
             navTargetId = id;
             arrivedOnce = false;
+            roadRoute = null;
+            lastRoutePos = null;
+            lastRouteAt = 0;
             closeModal();
             if (markers[id]) markers[id].closePopup();
             const loc = locations.find(l => l.id === id);
@@ -1083,12 +1114,13 @@
             document.getElementById("navHud").classList.add("active");
             if (watchId == null) startTracking(true);
             setFollow(true);
-            updateRoute();
+            updateRoute(true);
             updateNavHud();
         }
 
         function stopNav() {
             navTargetId = null;
+            roadRoute = null;
             document.getElementById("navHud").classList.remove("active");
             if (routeLine) {
                 map.removeLayer(routeLine);
@@ -1100,7 +1132,104 @@
             if (navTargetId != null) openModal(navTargetId);
         }
 
-        function updateRoute() {
+        function googleMapsNavUrl(loc) {
+            const dest = loc.lat + "," + loc.lng;
+            const origin = myPos ? myPos[0] + "," + myPos[1] : "";
+            let url = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(dest) + "&travelmode=driving";
+            if (origin) url += "&origin=" + encodeURIComponent(origin);
+            return url;
+        }
+
+        function openGoogleMaps() {
+            const loc = locations.find(l => l.id === navTargetId);
+            if (!loc) return toast("เลือกจุดก่อน");
+            window.open(googleMapsNavUrl(loc), "_blank");
+        }
+
+        function formatDuration(sec) {
+            if (sec < 60) return "ไม่ถึง 1 นาที";
+            const m = Math.round(sec / 60);
+            if (m < 60) return m + " นาที";
+            const h = Math.floor(m / 60);
+            const rm = m % 60;
+            return h + " ชม. " + rm + " นาที";
+        }
+
+        function remainingAlong(coords, pos) {
+            let nearest = 0, best = Infinity;
+            coords.forEach((c, i) => {
+                const d = haversine(pos, c);
+                if (d < best) { best = d; nearest = i; }
+            });
+            let rest = 0;
+            for (let i = nearest; i < coords.length - 1; i++) rest += haversine(coords[i], coords[i + 1]);
+            return { rest, nearest };
+        }
+
+        function nextStepText(pos) {
+            if (!roadRoute || !roadRoute.steps || !roadRoute.steps.length) return "";
+            const ahead = roadRoute.steps.find(st => haversine(pos, st.loc) > 18) || roadRoute.steps[roadRoute.steps.length - 1];
+            const d = formatDist(haversine(pos, ahead.loc));
+            return (ahead.text || "ตามเส้นทาง") + " · อีก " + d;
+        }
+
+        async function fetchRoadRoute(force) {
+            if (navTargetId == null || !myPos || routeFetching) return;
+            const loc = locations.find(l => l.id === navTargetId);
+            if (!loc) return;
+            const now = Date.now();
+            if (!force && lastRoutePos && haversine(lastRoutePos, myPos) < 40 && now - lastRouteAt < 12000) return;
+            routeFetching = true;
+            lastRouteAt = now;
+            lastRoutePos = myPos.slice();
+            const url = "https://router.project-osrm.org/route/v1/driving/" +
+                myPos[1] + "," + myPos[0] + ";" + loc.lng + "," + loc.lat +
+                "?overview=full&geometries=geojson&steps=true";
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const route = data.routes && data.routes[0];
+                if (!route) throw new Error("no route");
+                const coords = route.geometry.coordinates.map(p => [p[1], p[0]]);
+                const steps = [];
+                (route.legs || []).forEach(leg => {
+                    (leg.steps || []).forEach(step => {
+                        const loc2 = step.maneuver && step.maneuver.location;
+                        steps.push({
+                            text: (step.maneuver && step.maneuver.instruction) || step.name || "ตรงไป",
+                            loc: loc2 ? [loc2[1], loc2[0]] : coords[0],
+                            type: step.maneuver && step.maneuver.type
+                        });
+                    });
+                });
+                if (navTargetId == null) return;
+                roadRoute = { coords, distance: route.distance, duration: route.duration, steps };
+                drawRouteLine(coords, false);
+                updateNavHud();
+            } catch (_) {
+                roadRoute = null;
+                drawRouteLine([myPos, [loc.lat, loc.lng]], true);
+            } finally {
+                routeFetching = false;
+            }
+        }
+
+        function drawRouteLine(path, dashed) {
+            if (!path || path.length < 2) return;
+            if (!routeLine) {
+                routeLine = L.polyline(path, {
+                    color: "#1a73e8",
+                    weight: 5,
+                    dashArray: dashed ? "8 6" : null,
+                    opacity: 0.9
+                }).addTo(map);
+            } else {
+                routeLine.setLatLngs(path);
+                routeLine.setStyle({ dashArray: dashed ? "8 6" : null, color: "#1a73e8" });
+            }
+        }
+
+        function updateRoute(force) {
             if (!myPos || navTargetId == null) {
                 if (routeLine) {
                     map.removeLayer(routeLine);
@@ -1108,14 +1237,7 @@
                 }
                 return;
             }
-            const loc = locations.find(l => l.id === navTargetId);
-            if (!loc) return;
-            const path = [myPos, [loc.lat, loc.lng]];
-            if (!routeLine) {
-                routeLine = L.polyline(path, { color: "#2563eb", weight: 4, dashArray: "8 6" }).addTo(map);
-            } else {
-                routeLine.setLatLngs(path);
-            }
+            fetchRoadRoute(!!force);
         }
 
         function updateNavHud() {
@@ -1129,28 +1251,49 @@
                 document.getElementById("navDir").textContent = "รอสัญญาณ GPS";
                 return;
             }
-            const dist = haversine(myPos, [loc.lat, loc.lng]);
-            const brg = bearingTo(myPos, [loc.lat, loc.lng]);
-            document.getElementById("navDist").textContent = formatDist(dist);
-            let dirText = "ทิศ" + cardinal(brg);
-            if (myHeading != null) {
-                let rel = (brg - myHeading + 360) % 360;
-                if (rel > 180) rel -= 360;
-                if (Math.abs(rel) < 12) dirText += " · ตรงหน้า";
-                else if (rel > 0) dirText += " · เอียงขวา " + Math.round(Math.abs(rel)) + "°";
-                else dirText += " · เอียงซ้าย " + Math.round(Math.abs(rel)) + "°";
-                document.getElementById("compassNeedle").style.transform = "rotate(" + rel + "deg)";
+            const bird = haversine(myPos, [loc.lat, loc.lng]);
+            let dist = bird;
+            let dirText = "กำลังค้นหาเส้นทางตามถนน...";
+            if (roadRoute && roadRoute.coords && roadRoute.coords.length) {
+                const along = remainingAlong(roadRoute.coords, myPos);
+                dist = along.rest || roadRoute.distance;
+                dirText = nextStepText(myPos);
+                if (roadRoute.duration) dirText += " · ใช้เวลาประมาณ " + formatDuration(roadRoute.duration * (dist / Math.max(roadRoute.distance, 1)));
             } else {
-                document.getElementById("compassNeedle").style.transform = "rotate(" + brg + "deg)";
+                const brg = bearingTo(myPos, [loc.lat, loc.lng]);
+                dirText = "ทิศ" + cardinal(brg) + " (เส้นตรง รอเส้นทางถนน)";
+                const needle = document.getElementById("compassNeedle");
+                if (myHeading != null) {
+                    let rel = (brg - myHeading + 360) % 360;
+                    if (rel > 180) rel -= 360;
+                    needle.style.transform = "rotate(" + rel + "deg)";
+                } else {
+                    needle.style.transform = "rotate(" + brg + "deg)";
+                }
             }
-            if (dist <= 25) {
+            if (roadRoute && roadRoute.coords && roadRoute.coords.length) {
+                const next = roadRoute.steps.find(st => haversine(myPos, st.loc) > 18) || roadRoute.steps[0];
+                if (next) {
+                    const brg = bearingTo(myPos, next.loc);
+                    const needle = document.getElementById("compassNeedle");
+                    if (myHeading != null) {
+                        let rel = (brg - myHeading + 360) % 360;
+                        if (rel > 180) rel -= 360;
+                        needle.style.transform = "rotate(" + rel + "deg)";
+                    } else {
+                        needle.style.transform = "rotate(" + brg + "deg)";
+                    }
+                }
+            }
+            document.getElementById("navDist").textContent = formatDist(dist);
+            if (bird <= 25) {
                 dirText = "ถึงจุดแล้ว";
                 if (!arrivedOnce) {
                     arrivedOnce = true;
-                    toast("ถึงจุด " + loc.transformer + " แล้ว");
+                    toast("ถึงจุด " + s.transformer + " แล้ว");
                 }
             }
-            document.getElementById("navDir").textContent = dirText + " · ความแม่นยำ GPS ประมาณ " + Math.round((accCircle && accCircle.getRadius()) || 0) + " ม.";
+            document.getElementById("navDir").textContent = dirText;
         }
 
         document.getElementById("dataModal").addEventListener("click", e => {
