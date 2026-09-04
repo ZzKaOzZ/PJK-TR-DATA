@@ -6,6 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4f46e5">
+    <meta name="pea-app" content="transformer-collection">
     <title>PEA Data Collection - เก็บข้อมูลหม้อแปลง</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -167,6 +168,15 @@
             background: #2563eb; color: #fff; border: none; border-radius: 6px;
             padding: 8px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
         }
+        .item-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+        .reopen-btn {
+            background: #eab308; color: #422006; border: none; border-radius: 6px;
+            padding: 8px 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+        }
+        .btn-reopen {
+            background: #eab308; color: #422006; padding: 10px 18px;
+            border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 13px;
+        }
         .sidebar {
             background: #fff;
             border-radius: 14px;
@@ -274,6 +284,10 @@
         .img-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .camera-btn { background: #0f766e; color: #fff; padding: 12px 14px; }
         .ok-msg { display: none; margin-top: 8px; color: #065f46; background: #d1fae5; padding: 6px 8px; border-radius: 6px; font-size: 12px; }
+        .link-status { font-size: 12px; font-weight: 700; margin: 6px 0 8px; }
+        .link-status.ok { color: #166534; }
+        .link-status.wait { color: #a16207; }
+        .link-status.bad { color: #991b1b; }
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .stat-box { background: #f8fafc; padding: 10px; border-radius: 8px; text-align: center; }
         .stat-box .number { font-size: 20px; font-weight: 800; }
@@ -393,7 +407,7 @@
             .modal { padding: 0; }
             .modal-content { width: 100%; margin: 0; min-height: 100dvh; border-radius: 0; }
             .modal-footer { position: sticky; bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
-            .btn-primary, .btn-secondary, .btn-finish, .add-feeder-btn, .image-upload-btn, .camera-btn { min-height: 44px; }
+            .btn-primary, .btn-secondary, .btn-finish, .btn-reopen, .add-feeder-btn, .image-upload-btn, .camera-btn { min-height: 44px; }
             .map-controls { top: auto; bottom: 88px; }
             .nav-hud { right: 12px; left: 12px; top: 8px; }
             .map-legend { left: 12px; bottom: 12px; }
@@ -424,18 +438,19 @@
             </div>
             <div class="map-legend">
                 <div><span class="dot" style="background:#64748b"></span>ยังไม่ดำเนินการ</div>
-                <div><span class="dot" style="background:#eab308"></span>ลงข้อมูลไม่ครบ</div>
-                <div><span class="dot" style="background:#dc2626"></span>ดำเนินการแล้ว</div>
+                <div><span class="dot" style="background:#eab308"></span>กำลังนำเข้าข้อมูล</div>
+                <div>เสร็จสิ้นแล้ว — หายจากแผนที่</div>
             </div>
         </div>
         <aside class="sidebar">
             <div class="sidebar-header">
                 ระบบเก็บข้อมูลหม้อแปลง
-                <small>ปักหมุดจากไฟล์ Rak-D.xlsx · กดหมุดเพื่อเพิ่มข้อมูล</small>
+                <small>ปักหมุดจากไฟล์ Rak-D.xlsx · กดเสร็จสิ้นแล้วจุดจะหายจากแผนที่</small>
             </div>
             <div class="sidebar-content">
                 <div class="share-box">
                     <h3>ลิงก์ส่งไลน์ / ใช้บนมือถือ</h3>
+                    <div class="link-status wait" id="linkStatus">กำลังตรวจลิงก์...</div>
                     <input id="shareLink" class="share-link-input" readonly placeholder="กำลังสร้างลิงก์...">
                     <div class="share-actions">
                         <button class="copy-link-btn" onclick="copyLink()">คัดลอกลิงก์</button>
@@ -445,10 +460,8 @@
                     <p class="hint" id="shareHint">รอสร้างลิงก์ HTTPS สักครู่ จากนั้นส่งให้ทีมได้ทันที แม้ใช้เน็ตมือถือ</p>
                 </div>
                 <div class="perm-box" id="permBox">
-                    <h3 id="permTitle">สำคัญเรื่องลิงก์ไลน์</h3>
-                    <p id="permText">ลิงก์ในไลน์ใช้ได้เฉพาะอันล่าสุดในช่องด้านบน ลิงก์เก่าจะขึ้น no tunnel here ทุกครั้งที่ปิด start.bat หรือเน็ตหลุด</p>
-                    <div class="key-box" id="tunnelKeyBox" style="display:none"></div>
-                    <div class="perm-actions" style="display:none"></div>
+                    <h3 id="permTitle">วิธีใช้ลิงก์</h3>
+                    <p id="permText">เปิด start.bat ค้างไว้ ห้ามปิดฝาโน้ตบุ๊ค ลิงก์ที่ใช้ได้ต้องมี lhr.life หรือ pinggy.link เท่านั้น อย่าส่งลิงก์ที่เป็น admin.localhost.run</p>
                 </div>
                 <div class="stats">
                     <div class="stat-box"><div class="number" id="totalCount">0</div><div class="label">ทั้งหมด</div></div>
@@ -456,8 +469,8 @@
                     <div class="stat-box"><div class="number" id="partialCount" style="color:#ca8a04">0</div><div class="label">ไม่ครบ</div></div>
                     <div class="stat-box"><div class="number" id="pendingCount" style="color:#64748b">0</div><div class="label">รอดำเนินการ</div></div>
                 </div>
-                <button type="button" class="export-btn" onclick="exportExcel()">ส่งออก Excel (ข้อมูล + รูป)</button>
-                <p class="hint" id="exportHint">ดาวน์โหลดข้อมูลทั้งหมดพร้อมรูปแนบในไฟล์ Excel ใช้สำรองข้อมูล</p>
+                <button type="button" class="export-btn" onclick="exportExcel()">ส่งออก Excel + รูปต้นฉบับ</button>
+                <p class="hint" id="exportHint">ดาวน์โหลดเป็น ZIP: มีไฟล์ Excel (รูปโชว์ในชีต) และโฟลเดอร์รูปต้นฉบับให้คัดลอกไปใช้ต่อ</p>
                 <input class="search-input" id="searchBox" placeholder="ค้นหา หม้อแปลง / ผู้รับผิดชอบ" oninput="renderList()">
                 <div class="filters">
                     <button class="chip active" data-filter="all" onclick="setFilter('all')">ทั้งหมด</button>
@@ -488,7 +501,7 @@
                     <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                     <input type="file" id="imageInput" accept="image/*" multiple hidden>
                     <div class="image-upload" id="imagePreview"></div>
-                    <p class="hint">กดบันทึกเพื่อเก็บข้อมูลชั่วคราว (สีเหลือง) · กดเสร็จสิ้นเมื่อทำงานครบแล้ว (เปลี่ยนเป็นสีแดง)</p>
+                    <p class="hint">กดบันทึกเพื่อเก็บข้อมูลชั่วคราว (จุดสีเหลืองบนแผนที่) · กดเสร็จสิ้นเมื่อทำงานครบแล้ว (จุดจะหายจากแผนที่) · หากต้องการตรวจสอบอีกครั้ง กดกลับไปนำเข้าข้อมูลที่ใบงาน</p>
                 </div>
                 <div class="form-group">
                     <label>หมายเหตุ</label>
@@ -508,6 +521,7 @@
                 <button class="btn-secondary" onclick="closeModal()">ยกเลิก</button>
                 <button class="btn-primary" id="saveBtn" onclick="saveData(false)">บันทึกข้อมูล</button>
                 <button class="btn-finish" id="finishBtn" onclick="saveData(true)">เสร็จสิ้น</button>
+                <button class="btn-reopen" id="reopenBtn" onclick="reopenLocation(currentId)" style="display:none">กลับไปนำเข้าข้อมูล</button>
             </div>
         </div>
     </div>
@@ -563,7 +577,10 @@
         }
 
         async function api(path, options) {
-            const res = await fetch(API + path, options);
+            const opts = Object.assign({ cache: "no-store" }, options || {});
+            const sep = path.includes("?") ? "&" : "?";
+            const url = (opts.method && opts.method !== "GET") ? path : path + sep + "_=" + Date.now();
+            const res = await fetch(API + url, opts);
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(text || res.statusText);
@@ -592,31 +609,46 @@
                 const meta = await api("/api/meta");
                 const box = document.getElementById("shareLink");
                 const hint = document.getElementById("shareHint");
+                const status = document.getElementById("linkStatus");
                 tunnelPublicKey = meta.tunnelPublicKey || "";
-                const keyBox = document.getElementById("tunnelKeyBox");
-                if (keyBox) keyBox.textContent = tunnelPublicKey || "";
                 if (meta.hosted) {
                     document.getElementById("permTitle").textContent = "ลิงก์ออนไลน์ตลอด 24 ชม.";
-                    document.getElementById("permText").textContent = "ลิงก์ Render ใช้ได้แม้ปิดคอม แต่รูปที่อัปโหลดอาจหายเมื่อเซิร์ฟเวอร์รีสตาร์ท (แผนฟรี) ไม่ใช่เพราะเปิดลิงก์ใหม่ — ควรส่งออก Excel สำรองเป็นประจำ";
+                    document.getElementById("permText").textContent = "ลิงก์ Render ใช้ได้แม้ปิดคอม แต่รูปที่อัปโหลดอาจหายเมื่อเซิร์ฟเวอร์รีสตาร์ท (แผนฟรี) ควรส่งออก Excel สำรองเป็นประจำ";
                     const exportHint = document.getElementById("exportHint");
-                    if (exportHint) exportHint.textContent = "แนะนำส่งออก Excel ทุกวันหรือหลังลงข้อมูลสำคัญ — รูปจะถูกแนบในไฟล์";
+                    if (exportHint) exportHint.textContent = "แนะนำส่งออก ZIP ทุกวันหรือหลังลงข้อมูลสำคัญ — มีทั้ง Excel และรูปต้นฉบับในโฟลเดอร์ รูป/";
                 } else {
-                    document.getElementById("permTitle").textContent = "ลิงก์นี้ยังผูกกับคอมพิวเตอร์";
-                    document.getElementById("permText").textContent = "ใช้ได้เฉพาะตอนเปิด start.bat ค้างไว้ ถ้าต้องการใช้ตอนปิดคอม ให้อ่านไฟล์ วิธีขึ้นคลาวด์.txt แล้วขึ้น Render";
+                    document.getElementById("permTitle").textContent = "เปิดค้างไว้บนโน้ตบุ๊ค";
+                    document.getElementById("permText").textContent = "เปิด start.bat ค้างไว้ ห้ามปิดฝา แอปกันเครื่องหลับให้อัตโนมัติ ส่งเฉพาะลิงก์ที่ขึ้นว่าใช้ได้ และต้องมี lhr.life หรือ pinggy.link";
                 }
-                if (meta.publicUrl) {
+                const live = meta.publicOk && meta.publicUrl;
+                if (live) {
                     if (box.value && box.value !== meta.publicUrl) {
                         toast("ลิงก์อัปเดตแล้ว ส่งอันใหม่ในไลน์");
                     }
                     box.value = meta.publicUrl;
+                    if (status) {
+                        status.className = "link-status ok";
+                        status.textContent = "ใช้ได้ · ส่งลิงก์นี้ในไลน์เท่านั้น";
+                    }
                     hint.textContent = meta.tunnelNote || "ส่งลิงก์ล่าสุดในช่องนี้เท่านั้น";
                     return true;
                 }
-                const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-                box.value = isLocal ? (meta.lanUrl || location.href) : location.href.split("#")[0];
-                hint.textContent = "กำลังสร้างลิงก์... รอสักครู่";
+                box.value = "";
+                box.placeholder = "กำลังสร้างลิงก์ใหม่...";
+                if (status) {
+                    status.className = "link-status wait";
+                    status.textContent = "ยังใช้ไม่ได้ · กำลังสร้างลิงก์ใหม่";
+                }
+                hint.textContent = meta.lanUrl
+                    ? ("กำลังสร้างลิงก์สาธารณะ... ถ้ามือถือกับคอมอยู่ Wi-Fi เดียวกันใช้ " + meta.lanUrl)
+                    : "กำลังสร้างลิงก์... รอสักครู่";
             } catch {
-                document.getElementById("shareLink").value = location.href.split("#")[0];
+                document.getElementById("shareLink").value = "";
+                const status = document.getElementById("linkStatus");
+                if (status) {
+                    status.className = "link-status bad";
+                    status.textContent = "ตรวจลิงก์ไม่สำเร็จ · ตรวจว่าเปิด start.bat อยู่";
+                }
             }
             return false;
         }
@@ -632,11 +664,20 @@
 
         async function confirmPermanent() {
             try {
+                const box = document.getElementById("shareLink");
+                const old = (box && box.value) || "";
                 const res = await api("/api/tunnel/confirm", { method: "POST" });
-                toast(res.message || "ตั้งลิงก์ถาวรแล้ว");
-                await loadMeta();
+                toast(res.message || "กำลังต่อลิงก์เดิม...");
+                let sawDown = false;
+                for (let i = 0; i < 60; i++) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    const ok = await loadMeta();
+                    const now = (box && box.value) || "";
+                    if (!ok) sawDown = true;
+                    if (ok && (sawDown || now !== old)) return;
+                }
             } catch (e) {
-                toast("ยืนยันไม่สำเร็จ — รอลิงก์ขึ้นก่อน แล้วลงทะเบียนคีย์ที่ localhost.run");
+                toast("ยืนยันไม่สำเร็จ — วางคีย์ที่ localhost.run ให้เสร็จก่อน แล้วกดอีกครั้ง");
             }
         }
 
@@ -649,8 +690,8 @@
 
         function shareLine() {
             const url = document.getElementById("shareLink").value.trim();
-            if (!url || url.indexOf("http") !== 0) {
-                toast("รอลิงก์พร้อมก่อน แล้วค่อยส่งไลน์");
+            if (!url || url.indexOf("https://") !== 0) {
+                toast("รอลิงก์ขึ้นว่า ใช้ได้ ก่อน แล้วค่อยส่งไลน์");
                 return;
             }
             const text = `ลิงก์เก็บข้อมูลหม้อแปลง\n${url}`;
@@ -669,6 +710,7 @@
             markers = {};
             const bounds = [];
             locations.forEach(loc => {
+                if (loc.status === "completed") return;
                 const color = COLORS[loc.status] || COLORS.pending;
                 const marker = L.marker([loc.lat, loc.lng], { icon: pinIcon(color) }).addTo(map);
                 marker.bindPopup(() => popupHtml(loc));
@@ -679,7 +721,22 @@
         }
 
         function setMarkerColor(id, status) {
-            if (markers[id]) markers[id].setIcon(pinIcon(COLORS[status] || COLORS.pending));
+            if (status === "completed") {
+                if (markers[id]) {
+                    map.removeLayer(markers[id]);
+                    delete markers[id];
+                }
+                return;
+            }
+            const loc = locations.find(l => l.id === id);
+            const color = COLORS[status] || COLORS.pending;
+            if (markers[id]) {
+                markers[id].setIcon(pinIcon(color));
+            } else if (loc) {
+                const marker = L.marker([loc.lat, loc.lng], { icon: pinIcon(color) }).addTo(map);
+                marker.bindPopup(() => popupHtml(loc));
+                markers[id] = marker;
+            }
         }
 
         function setFilter(next) {
@@ -714,6 +771,9 @@
                     const dist = myPos ? formatDist(haversine(myPos, [loc.lat, loc.lng])) : "";
                     const div = document.createElement("div");
                     div.className = `location-item ${loc.status}`;
+                    const reopenHtml = loc.status === "completed"
+                        ? `<button type="button" class="reopen-btn">กลับไปนำเข้าข้อมูล</button>`
+                        : "";
                     div.innerHTML = `
                         <div class="item-row">
                             <div>
@@ -722,15 +782,25 @@
                                 ${dist ? `<div class="dist-label">${dist}</div>` : ""}
                                 <span class="badge ${loc.status}">${STATUS_TEXT[loc.status]}</span>
                             </div>
-                            <button type="button" class="mini-nav">นำทาง</button>
+                            <div class="item-actions">
+                                <button type="button" class="mini-nav">นำทาง</button>
+                                ${reopenHtml}
+                            </div>
                         </div>
                     `;
                     div.querySelector(".mini-nav").onclick = (ev) => {
                         ev.stopPropagation();
                         startNav(loc.id);
                     };
+                    const reopenEl = div.querySelector(".reopen-btn");
+                    if (reopenEl) {
+                        reopenEl.onclick = (ev) => {
+                            ev.stopPropagation();
+                            reopenLocation(loc.id);
+                        };
+                    }
                     div.onclick = () => {
-                        map.setView([loc.lat, loc.lng], 16);
+                        if (loc.status !== "completed") map.setView([loc.lat, loc.lng], 16);
                         openModal(loc.id);
                     };
                     list.appendChild(div);
@@ -778,9 +848,12 @@
             const feeders = (loc.data.feeders && loc.data.feeders.length) ? loc.data.feeders : [{ name: "ฟีดเดอร์ 1", ia: "", ib: "", ic: "" }];
             renderFeeders(feeders);
             const finishBtn = document.getElementById("finishBtn");
+            const reopenBtn = document.getElementById("reopenBtn");
             const done = loc.data.finished || loc.status === "completed";
             finishBtn.disabled = done;
             finishBtn.textContent = done ? "เสร็จสิ้นแล้ว" : "เสร็จสิ้น";
+            finishBtn.style.display = done ? "none" : "";
+            reopenBtn.style.display = done ? "" : "none";
             document.getElementById("dataModal").classList.add("active");
         }
 
@@ -934,21 +1007,60 @@
                     body: JSON.stringify(payload)
                 });
                 await loadLocations(true);
-                toast(markFinished ? "เสร็จสิ้นแล้ว · หมุดเปลี่ยนเป็นสีแดง" : "บันทึกข้อมูลแล้ว");
+                toast(markFinished ? "เสร็จสิ้นแล้ว · จุดหายจากแผนที่" : "บันทึกข้อมูลแล้ว · จุดสีเหลืองบนแผนที่");
                 closeModal();
             } catch (err) {
                 toast("บันทึกไม่สำเร็จ: ตรวจว่าเปิดผ่านเซิร์ฟเวอร์แล้ว");
                 console.error(err);
             } finally {
+                const latest = locations.find(l => l.id === loc?.id);
+                const done = latest?.data?.finished || latest?.status === "completed";
                 saveBtn.disabled = false;
-                finishBtn.disabled = loc?.data?.finished || loc?.status === "completed";
+                finishBtn.disabled = done;
                 saveBtn.textContent = "บันทึกข้อมูล";
-                finishBtn.textContent = (loc?.data?.finished || loc?.status === "completed") ? "เสร็จสิ้นแล้ว" : "เสร็จสิ้น";
+                finishBtn.textContent = done ? "เสร็จสิ้นแล้ว" : "เสร็จสิ้น";
+                finishBtn.style.display = done ? "none" : "";
+                const reopenBtn = document.getElementById("reopenBtn");
+                if (reopenBtn) reopenBtn.style.display = done ? "" : "none";
+            }
+        }
+
+        async function reopenLocation(id) {
+            if (id == null) return;
+            const loc = locations.find(l => l.id === id);
+            if (!loc) return;
+            const reopenBtn = document.getElementById("reopenBtn");
+            const listBusy = document.querySelectorAll(".reopen-btn");
+            if (reopenBtn) reopenBtn.disabled = true;
+            listBusy.forEach(b => { b.disabled = true; });
+            try {
+                await api(`/api/locations/${id}/reopen`, { method: "POST" });
+                await loadLocations(true);
+                const updated = locations.find(l => l.id === id);
+                if (updated) {
+                    map.setView([updated.lat, updated.lng], 16);
+                    if (markers[id]) {
+                        markers[id].openPopup();
+                    }
+                }
+                toast("กลับไปนำเข้าข้อมูลแล้ว · จุดสีเหลืองบนแผนที่");
+                openModal(id);
+            } catch (err) {
+                toast("เปิดใบงานอีกครั้งไม่สำเร็จ");
+                console.error(err);
+            } finally {
+                if (reopenBtn) reopenBtn.disabled = false;
+                listBusy.forEach(b => { b.disabled = false; });
             }
         }
 
         function copyLink() {
             const el = document.getElementById("shareLink");
+            const url = (el.value || "").trim();
+            if (!url || url.indexOf("https://") !== 0) {
+                toast("ยังไม่มีลิงก์ที่ใช้ได้ รอสักครู่");
+                return;
+            }
             el.select();
             navigator.clipboard.writeText(el.value).then(() => {
                 document.getElementById("successMsg").style.display = "block";
@@ -960,7 +1072,7 @@
         }
 
         function exportExcel() {
-            toast("กำลังสร้างไฟล์ Excel...");
+            toast("กำลังสร้างไฟล์ ZIP (Excel + รูปต้นฉบับ)...");
             window.location.href = `${API}/api/export`;
         }
 
@@ -1321,7 +1433,7 @@
             document.getElementById("lineBanner").style.display = "block";
         }
         waitForPublicLink();
-        setInterval(() => loadMeta().catch(() => {}), 15000);
+        setInterval(() => loadMeta().catch(() => {}), 4000);
         loadLocations(false).catch(() => {
             toast("ต้องเปิดผ่าน start.bat จึงจะบันทึกและแชร์ลิงก์ได้");
         });
