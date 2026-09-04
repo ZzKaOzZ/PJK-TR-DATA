@@ -1,1 +1,627 @@
-{}
+{
+  "1": {
+    "notes": "",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "",
+        "ib": "",
+        "ic": ""
+      }
+    ],
+    "images": [],
+    "updatedAt": "2026-08-24T07:00:12.061819+00:00",
+    "updatedBy": "",
+    "finished": false
+  },
+  "4": {
+    "notes": "",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "",
+        "ib": "",
+        "ic": ""
+      }
+    ],
+    "images": [],
+    "updatedAt": "2026-08-17T04:32:07.685770+00:00",
+    "updatedBy": ""
+  },
+  "2": {
+    "notes": "",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "",
+        "ib": "",
+        "ic": ""
+      }
+    ],
+    "images": [],
+    "updatedAt": "2026-08-17T04:32:14.795749+00:00",
+    "updatedBy": "",
+    "finished": false
+  },
+  "19": {
+    "notes": "",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "",
+        "ib": "",
+        "ic": ""
+      }
+    ],
+    "images": [],
+    "finished": false,
+    "updatedAt": "2026-08-28T06:47:05.932355+00:00",
+    "updatedBy": ""
+  },
+  "7": {
+    "notes": "4.04\n7.27",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "6.50",
+        "ib": "5.66",
+        "ic": "1.72"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "8.21",
+        "ib": "3.18",
+        "ic": "1.90"
+      }
+    ],
+    "images": [
+      {
+        "filename": "75a9b347242e4798a5c2d5d21515ff28.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "ce9fcd671a444ea2b91f37cbe07dbee6.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "1d2704f42d82471caa8fee383eeea8f3.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "245499294df7498d9036246e3c660a6d.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "35e832c977ea4b62ae6b29a407061650.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "d9c73e8684d044c78c5b11d2d936a1a6.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "b28531cc822b46069abef949b63389ed.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "927c942a7d36443d80850f5263c7af76.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "a20f8692b0bf47269a2aa8bbf093b750.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:20:58.639252+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:20:58.639234+00:00"
+  },
+  "38": {
+    "notes": "10.1\n1.09",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "11.7",
+        "ib": "12.9",
+        "ic": "4.96"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "5.3",
+        "ib": "0.72",
+        "ic": "0.73"
+      }
+    ],
+    "images": [
+      {
+        "filename": "b3c6f05e0b274ae4a974acd521db74f6.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "c29926c296d549edb635ed3fc161e7ab.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "f3e84aa04615441492bb339cfad7f09a.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "14b66ccf845b498295ff9674167755f1.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "1c8c4e5e311847b499b5a1d56c00693e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "33a53ea13dbe4fa7b231bf7bdc3d538b.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "95163f450b904731aa57df1f93413ebe.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "5bba164c5ed3400184650c640a081ed1.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "503d7b32cce0445988579b7c0a97f106.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:21:22.806085+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:21:22.806067+00:00"
+  },
+  "47": {
+    "notes": "3.99\n11.8",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "1.42",
+        "ib": "3.15",
+        "ic": "9.97"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "2.83",
+        "ib": "5.80",
+        "ic": "3.57"
+      }
+    ],
+    "images": [
+      {
+        "filename": "41392cbd9c5541d694219ed8eb1ec55f.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "ed6a9a7d11e34c5397a1fe99d2d3c864.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "221dccb1fc6345a68b89368aa07e1544.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "2e012dafd828480c88ace016d9a803aa.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "686ef1658f524a0a845752cdda984b71.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "27921cdac05b46f6b0dc7fb74751fa3a.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "cf7616d05e034b1d89dc581fee9971b0.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "c094924bd3b94f338fa63c10286f184a.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "4a598de489054edd88469c18403d0728.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:21:26.547749+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:21:26.547737+00:00"
+  },
+  "46": {
+    "notes": "3.41\n5.21",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "4.13",
+        "ib": "504",
+        "ic": "2.89"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "8.29",
+        "ib": "7.41",
+        "ic": "2.99"
+      }
+    ],
+    "images": [
+      {
+        "filename": "0aa2a1276fde4e7a813009fb7535aa24.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "4137f9f47fe145c381d8dbdb12a6afa0.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "4e4b51ee33a84d118f1f260ddc7edd70.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "a2225b4f45a94cfbb8ec56aaa5966d01.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "1370dfa6b37143e8957cd320ad59db78.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "843491e90f604d5d88cdf2cbc787bf7e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "1dbca4fa718e47c7ad680a7ddc612756.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "7c4bbe8b984e4512bd113deef70aa10b.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "c80244479bc841b6900562a1e46bf799.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:21:30.081941+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:21:30.081923+00:00"
+  },
+  "17": {
+    "notes": "9.96",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "12.5",
+        "ib": "2.74",
+        "ic": "2.43"
+      }
+    ],
+    "images": [
+      {
+        "filename": "74d92d30685c43d594bc391ccd338010.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "abf7e4a42c3a4787a1db1ad13386ffdb.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "0b67df6dbb284f2b848c03babce7f803.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "4929388fb1534966927f50a13ef8e317.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "6bed4ce54eb54964a23e747cf1a1a9fd.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:21:34.616240+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:21:34.616229+00:00"
+  },
+  "8": {
+    "notes": "38.1\n2.53",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "37.9",
+        "ib": "64.7",
+        "ic": "24.6"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "2.49",
+        "ib": "5.6",
+        "ic": "1.2"
+      }
+    ],
+    "images": [
+      {
+        "filename": "564f70f5c53145a0a2eed47ec058dc08.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "d2f82c31c3ed494fa2438c4008384e4d.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "fe507673970348bea10cad965e6ce6d1.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "cb810f133e734ace9101cc6ea237e599.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "a93b6dbd9c0a4361a9659277e8142a28.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "490a637c723642849c09447df6a007d8.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "e87a5b6447a74e59bdb6bd344291270d.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "ab18a3c9b9bd4099a8c5f1508291a0f0.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "442f2ad4b20746c983a2b26ce1e9cb58.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:22:04.219010+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:22:04.218995+00:00"
+  },
+  "6": {
+    "notes": "18.6\n3.3",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "22.0",
+        "ib": "6.73",
+        "ic": "37.0"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "2.98",
+        "ib": "3.13",
+        "ic": "0.81"
+      }
+    ],
+    "images": [
+      {
+        "filename": "d33d911d87aa40e6b44f7a034f994988.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "fed739dfece94fe5974642b18ae6be7e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "b8106c506b1b43119063fbc0695fa68f.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "ddc4d521c25a4e90a363425a9ada05d9.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "59675ab17bd14e0dbaddf4038da2236a.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "38cc2ddafc2847e6b59eb79b733133fc.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "0b6b2142d35a4cf18af7a7a69a9ecdde.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "5961886a914c401cbd3065eaf9a32bd8.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "a596a2a4e43a47b6bbf4dfd07f870c35.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:22:11.011276+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:22:11.011259+00:00"
+  },
+  "76": {
+    "notes": "30.5\n1.50",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "46.9",
+        "ib": "29.1",
+        "ic": "11.3"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "3.45",
+        "ib": "6.97",
+        "ic": "2.30"
+      }
+    ],
+    "images": [
+      {
+        "filename": "63cd183e89d4427196b18565e4d519cb.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "cf8aa0eb464c46a7aef1b8d3c0f3f5e0.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "5cc8ecd652bf43809fd04bb9a797dc64.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "8cd10c4a621f42b897cc4f79cbb0a37e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "439c3fbdd1654198b6b708926b2cae50.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "a8a9d60e231944e29ae0e4f12286c957.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "7936c148e77141d4937e22922da7f1df.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "c4171beb39a84616a432eaceb486ba79.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "f12353d59b2e4b74a6c0b4d0d9265771.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:22:19.185657+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:22:19.185646+00:00"
+  },
+  "58": {
+    "notes": "18.7\n25.6",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "12.9",
+        "ib": "4.67",
+        "ic": "28.7"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "11.0",
+        "ib": "15.9",
+        "ic": "29.4"
+      }
+    ],
+    "images": [
+      {
+        "filename": "13d31b9cc449481a8ae951358f4d2346.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "faa7ef3f0a764b2bbed31978895fcaec.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "7583dcb366f44f2eaeddf2a9ebef2e88.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "d57359ab3198440eae7e8898fa43b0ee.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "5235a3ea3c784007a0c7deb4f410a53e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "6f6acbe5424f4a7cbc8415edf2c48a3d.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "d51180990be149c5a0e43b8818bcd955.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "e065e6ec58d9431aa8ac1af75cb5c131.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "e29b5ea46add4bc791578a86067756aa.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:22:22.547767+00:00",
+    "updatedBy": "",
+    "finished": true,
+    "finishedAt": "2026-09-01T04:22:22.547756+00:00"
+  },
+  "67": {
+    "notes": "7.98\n10.7",
+    "feeders": [
+      {
+        "name": "ฟีดเดอร์ 1",
+        "ia": "8.59",
+        "ib": "9.0",
+        "ic": "1.39"
+      },
+      {
+        "name": "ฟีดเดอร์ 2",
+        "ia": "2.88",
+        "ib": "13.6",
+        "ic": "6.16"
+      }
+    ],
+    "images": [
+      {
+        "filename": "843726a915e144668a3491efc2592d05.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "9907217d40424cd7b7d3c825f9a6f90e.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "b12e02b5130a43baa167bd1b62eaae4a.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "89d85b4f992a4c8bb300daac5ea0f00f.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "f60fe2531a444be5a2a7162f0ebe5bca.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "d3ea87d403744035b60b61fe507215b5.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "1b2d47abe63d428187044fe26d71e562.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "39e13fb632e7415385af62feca0c6733.jpg",
+        "original": "image.jpg"
+      },
+      {
+        "filename": "82c6562bd1424929a30db06178099154.jpg",
+        "original": "image.jpg"
+      }
+    ],
+    "updatedAt": "2026-09-01T04:24:49.039984+00:00",
+    "updatedBy": ""
+  }
+}
